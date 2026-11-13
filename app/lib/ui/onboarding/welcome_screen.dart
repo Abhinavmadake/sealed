@@ -106,7 +106,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         onPressed: _register,
         child: const Text('Create account'),
       );
-      final signIn = GlassButton(height: 46, onPressed: _login, child: const Text('Sign in'));
+      final signIn = GlassButton(height: 46, blur: 0, onPressed: _login, child: const Text('Sign in'));
       return stacked
           ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [create, const SizedBox(height: 10), signIn])
           : Row(children: [create, const SizedBox(width: 12), signIn]);
@@ -246,6 +246,7 @@ class _ServerPill extends StatelessWidget {
       button: true,
       label: reachable == false ? 'Server unreachable: $host' : 'Server: $host',
       child: Glass(
+        blur: 0,
         child: InkWell(
           onTap: onTap,
           customBorder: const StadiumBorder(),

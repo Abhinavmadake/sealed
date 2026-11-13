@@ -20,31 +20,32 @@ class Glass extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) => ClipPath(
-    clipper: ShapeBorderClipper(shape: shape),
-    child: BackdropFilter(
-      filter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-      child: CustomPaint(
-        foregroundPainter: _RimPainter(shape),
-        child: DecoratedBox(
-          decoration: ShapeDecoration(
-            shape: shape,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: tint * 2.1),
-                Colors.white.withValues(alpha: tint * 0.6),
-                Colors.white.withValues(alpha: tint),
-              ],
-              stops: const [0, 0.55, 1],
-            ),
+  Widget build(BuildContext context) {
+    final surface = CustomPaint(
+      foregroundPainter: _RimPainter(shape),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: shape,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: tint * 2.1),
+              Colors.white.withValues(alpha: tint * 0.6),
+              Colors.white.withValues(alpha: tint),
+            ],
+            stops: const [0, 0.55, 1],
           ),
-          child: Padding(padding: padding, child: child),
         ),
+        child: Padding(padding: padding, child: child),
       ),
-    ),
-  );
+    );
+    if (blur <= 0) return surface;
+    return ClipPath(
+      clipper: ShapeBorderClipper(shape: shape),
+      child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: surface),
+    );
+  }
 }
 
 class _RimPainter extends CustomPainter {
@@ -98,6 +99,7 @@ class GlassButton extends StatelessWidget {
     this.icon,
     this.height = 52,
     this.fontSize,
+    this.blur = 18,
   });
 
   final VoidCallback? onPressed;
@@ -105,6 +107,7 @@ class GlassButton extends StatelessWidget {
   final Widget? icon;
   final double height;
   final double? fontSize;
+  final double blur;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +122,7 @@ class GlassButton extends StatelessWidget {
       button: true,
       enabled: onPressed != null,
       child: Glass(
+        blur: blur,
         child: Material(
           type: MaterialType.transparency,
           child: InkWell(

@@ -1,11 +1,12 @@
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'glass.dart';
+import 'raster.dart';
 
 /// Fine graphite grain laid over every screen.
 class GrainOverlay extends StatelessWidget {
@@ -21,7 +22,11 @@ class GrainOverlay extends StatelessWidget {
       child: RepaintBoundary(
         child: CustomPaint(
           size: Size.infinite,
-          painter: _GrainPainter(scheme.onSurface.withValues(alpha: dark ? 0.07 : 0.09), density),
+          painter: _GrainPainter(
+            scheme.onSurface.withValues(alpha: dark ? 0.07 : 0.09),
+            density,
+            MediaQuery.devicePixelRatioOf(context),
+          ),
         ),
       ),
     );
@@ -29,13 +34,22 @@ class GrainOverlay extends StatelessWidget {
 }
 
 class _GrainPainter extends CustomPainter {
-  _GrainPainter(this.color, this.density);
+  _GrainPainter(this.color, this.density, this.dpr);
 
   final Color color;
   final double density;
+  final double dpr;
+
+  static final _images = RasterCache(2);
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+    final image = _images.get((size, color, density, dpr), size, dpr, (c) => _draw(c, size));
+    drawRaster(canvas, image, Offset.zero & size);
+  }
+
+  void _draw(Canvas canvas, Size size) {
     final rng = math.Random(7);
     final n = (size.width * size.height * density).round();
     final fine = Float32List(n * 2);
@@ -57,7 +71,7 @@ class _GrainPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GrainPainter old) => old.color != color || old.density != density;
+  bool shouldRepaint(_GrainPainter old) => old.color != color || old.density != density || old.dpr != dpr;
 }
 
 /// A padlock drawn as a stippled point cloud. The dots start on a huge scattered ring, much of it
@@ -75,28 +89,32 @@ class StippleLock extends StatefulWidget {
 
 class _StippleLockState extends State<StippleLock> with SingleTickerProviderStateMixin {
   late final _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000));
-  _Cloud? _lock;
-  _Cloud? _dust;
-  Rect? _screen;
+  List<_Cloud>? _clouds;
+  Object? _job;
 
-  void _measure() {
-    if (!mounted || !widget.dust) return;
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return;
-    final origin = box.localToGlobal(Offset.zero);
-    final screen = MediaQuery.sizeOf(context);
-    final rect = Rect.fromLTWH(-origin.dx, -origin.dy, screen.width, screen.height);
-    if (_screen != rect) setState(() => _screen = rect);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _controller.value = 1;
-    } else if (!_controller.isAnimating && _controller.value == 0) {
-      _controller.forward();
+  /// Lays out the dots on a background isolate, then starts the animation once they are ready.
+  void _prepare(Size size, double reach) {
+    if (!mounted) return;
+    Rect? screen;
+    if (widget.dust) {
+      final box = context.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return;
+      final origin = box.localToGlobal(Offset.zero);
+      final s = MediaQuery.sizeOf(context);
+      screen = Rect.fromLTWH(-origin.dx, -origin.dy, s.width, s.height);
     }
+    final job = (size.width, size.height, reach, widget.seed, screen);
+    if (job == _job) return;
+    _job = job;
+    compute(_makeClouds, job).then((clouds) {
+      if (!mounted || _job != job) return;
+      setState(() => _clouds = clouds);
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _controller.value = 1;
+      } else {
+        _controller.forward(from: 0);
+      }
+    });
   }
 
   @override
@@ -108,27 +126,28 @@ class _StippleLockState extends State<StippleLock> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final ink = Theme.of(context).colorScheme.onSurface;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     final screen = MediaQuery.sizeOf(context);
     final reach = math.sqrt(screen.width * screen.width + screen.height * screen.height) / 2;
-    if (widget.dust) WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
     return LayoutBuilder(builder: (context, box) {
       final size = Size(box.maxWidth, box.maxHeight);
-      if (_lock?.size != size || _lock?.reach != reach) {
-        _lock = _Cloud.lock(size, reach, widget.seed);
-        _dust = null;
-      }
-      final screenRect = _screen;
-      if (widget.dust && screenRect != null && _dust?.screen != screenRect) {
-        _dust = _Cloud.dust(size, reach, widget.seed + 1, screenRect);
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) => _prepare(size, reach));
+      final clouds = _clouds;
+      if (clouds == null) return SizedBox.fromSize(size: size);
       return RepaintBoundary(
-        child: CustomPaint(
-          size: size,
-          painter: _CloudPainter([_lock!, ?_dust], _controller, ink),
-        ),
+        child: CustomPaint(size: size, painter: _CloudPainter(clouds, _controller, ink, dpr)),
       );
     });
   }
+}
+
+List<_Cloud> _makeClouds((double, double, double, int, Rect?) job) {
+  final (w, h, reach, seed, screen) = job;
+  final size = Size(w, h);
+  return [
+    _Cloud.lock(size, reach, seed),
+    if (screen != null) _Cloud.dust(size, reach, seed + 1, screen),
+  ];
 }
 
 /// Points sorted by dot size, each with its resting place, its start offset and a sideways bend.
@@ -144,9 +163,9 @@ class _Cloud {
   final Float32List delay;
   final List<int> bucketEnd;
 
-  static const sizes = [0.75, 1.3, 2.3];
-  static const alphas = [0.9, 0.6, 0.25];
-  static const maxPoints = 60000;
+  static const sizes = [1.05, 1.6, 2.4];
+  static const alphas = [0.95, 0.7, 0.3];
+  static const maxPoints = 34000;
 
   int get length => delay.length;
 
@@ -212,7 +231,7 @@ class _Cloud {
       math.max((screen.left - cx).abs(), (screen.right - cx).abs()),
       math.max((screen.top - cy).abs(), (screen.bottom - cy).abs()),
     );
-    final candidates = math.min((screen.width * screen.height * 0.12).round(), 200000);
+    final candidates = math.min((screen.width * screen.height * 0.1).round(), 140000);
     final xs = <double>[], ys = <double>[];
     for (var i = 0; i < candidates; i++) {
       final x = screen.left + rng.nextDouble() * screen.width;
@@ -225,7 +244,7 @@ class _Cloud {
       final edge = math.min(math.min(x - screen.left, screen.right - x), math.min(y - screen.top, screen.bottom - y));
       final soft = (edge / fade).clamp(0.0, 1.0);
       final clump = 0.55 + 0.45 * math.sin(x * 0.031 + y * 0.017) * math.sin(y * 0.027 - x * 0.013 + 1.3);
-      if (rng.nextDouble() < 0.42 * falloff * soft * soft * clump) {
+      if (rng.nextDouble() < 0.32 * falloff * soft * soft * clump) {
         xs.add(x);
         ys.add(y);
       }
@@ -267,11 +286,14 @@ double _lockDensity(double u, double v) {
 }
 
 class _CloudPainter extends CustomPainter {
-  _CloudPainter(this.clouds, this.progress, this.ink) : super(repaint: progress);
+  _CloudPainter(this.clouds, this.progress, this.ink, this.dpr) : super(repaint: progress);
 
   final List<_Cloud> clouds;
   final Animation<double> progress;
   final Color ink;
+  final double dpr;
+
+  static final _settled = RasterCache(3);
 
   static const _steps = 8;
   static const _span = 0.68;
@@ -289,6 +311,22 @@ class _CloudPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final t = progress.value;
+    if (t < 1) {
+      _points(canvas, t);
+      return;
+    }
+    var bounds = Offset.zero & size;
+    for (final c in clouds) {
+      if (c.screen != null) bounds = bounds.expandToInclude(c.screen!);
+    }
+    final image = _settled.get((clouds.first, clouds.last, ink, dpr), bounds.size, dpr, (c) {
+      c.translate(-bounds.left, -bounds.top);
+      _points(c, 1);
+    });
+    drawRaster(canvas, image, bounds);
+  }
+
+  void _points(Canvas canvas, double t) {
     final paint = Paint();
     for (final cloud in clouds) {
       var from = 0;
@@ -339,7 +377,7 @@ class _CloudPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CloudPainter old) =>
-      old.ink != ink || old.clouds.length != clouds.length || !identical(old.clouds.first, clouds.first) ||
+      old.ink != ink || old.dpr != dpr || old.clouds.length != clouds.length || !identical(old.clouds.first, clouds.first) ||
       (clouds.length > 1 && !identical(old.clouds.last, clouds.last));
 }
 

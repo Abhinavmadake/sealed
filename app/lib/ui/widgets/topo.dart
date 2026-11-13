@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import 'raster.dart';
+
 /// Topographic contour lines over a smooth noise field, with an optional peak at [focus].
 class TopoBackground extends StatelessWidget {
   const TopoBackground({
@@ -28,27 +30,20 @@ class TopoBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ink = Theme.of(context).colorScheme.onSurface;
-    Widget lines = RepaintBoundary(
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _TopoPainter(_TopoSpec(focus, peak, seed, levels), ink.withValues(alpha: opacity)),
+    final fade = fadeBottom || fadeTo != null ? (fadeTo ?? 0, fadeTo == null ? 0.35 : 0.55) : null;
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: CustomPaint(
+          size: Size.infinite,
+          painter: _TopoPainter(
+            _TopoSpec(focus, peak, seed, levels),
+            ink.withValues(alpha: opacity),
+            fade,
+            MediaQuery.devicePixelRatioOf(context),
+          ),
+        ),
       ),
     );
-    if (fadeBottom || fadeTo != null) {
-      final end = Colors.white.withValues(alpha: fadeTo ?? 0);
-      final hold = fadeTo == null ? 0.35 : 0.55;
-      lines = ShaderMask(
-        blendMode: BlendMode.dstIn,
-        shaderCallback: (rect) => LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.white, Colors.white, end],
-          stops: [0, hold, 1],
-        ).createShader(rect),
-        child: lines,
-      );
-    }
-    return IgnorePointer(child: lines);
   }
 }
 
@@ -171,17 +166,28 @@ _Contours _build(Size size, _TopoSpec spec) {
 }
 
 class _TopoPainter extends CustomPainter {
-  _TopoPainter(this.spec, this.ink);
+  _TopoPainter(this.spec, this.ink, this.fade, this.dpr);
 
   final _TopoSpec spec;
   final Color ink;
+  final (double, double)? fade;
+  final double dpr;
+
+  static final _images = RasterCache(6);
 
   @override
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
+    final image = _images.get((size, spec, ink, fade, dpr), size, dpr, (c) => _draw(c, size));
+    drawRaster(canvas, image, Offset.zero & size);
+  }
+
+  void _draw(Canvas canvas, Size size) {
     final key = (size, spec);
     final contours = _cache[key] ??= _build(size, spec);
     if (_cache.length > 6) _cache.remove(_cache.keys.first);
+    final fade = this.fade;
+    if (fade != null) canvas.saveLayer(Offset.zero & size, Paint());
     final paint = Paint()
       ..strokeCap = StrokeCap.round
       ..isAntiAlias = true;
@@ -199,10 +205,25 @@ class _TopoPainter extends CustomPainter {
         ..color = ink.withValues(alpha: ink.a * 0.28)
         ..strokeWidth = 1.1,
     );
+    if (fade != null) {
+      canvas.drawRect(
+        Offset.zero & size,
+        Paint()
+          ..blendMode = BlendMode.dstIn
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.white, Colors.white, Colors.white.withValues(alpha: fade.$1)],
+            stops: [0, fade.$2, 1],
+          ).createShader(Offset.zero & size),
+      );
+      canvas.restore();
+    }
   }
 
   @override
-  bool shouldRepaint(_TopoPainter old) => old.spec != spec || old.ink != ink;
+  bool shouldRepaint(_TopoPainter old) =>
+      old.spec != spec || old.ink != ink || old.fade != fade || old.dpr != dpr;
 }
 
 /// Gives every pushed page the graphite base and a contour field, then runs the usual zoom transition.

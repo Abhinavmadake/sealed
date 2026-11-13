@@ -121,6 +121,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                   if (service.biometricEnabled) ...[
                     const SizedBox(height: 10),
                     GlassButton(
+                      blur: 0,
                       onPressed: _busy ? null : _biometric,
                       icon: const Icon(Icons.fingerprint),
                       child: const Text('Use fingerprint'),
