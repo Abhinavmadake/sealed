@@ -225,8 +225,8 @@ class _VaultScreenState extends State<VaultScreen> {
         ),
         floatingActionButton: GlassButton(
           onPressed: _new,
-          height: 66,
-          fontSize: 18,
+          height: 60,
+          fontSize: 16.5,
           icon: const Icon(Icons.add),
           child: const Text('New'),
         ),
