@@ -4,6 +4,7 @@ import '../../core/api/api_client.dart';
 import '../../services/vault_service.dart';
 import 'login_screen.dart';
 import '../theme.dart';
+import '../widgets/elastic.dart';
 import '../widgets/glass.dart';
 import '../widgets/stipple.dart';
 import '../widgets/topo.dart';
@@ -96,18 +97,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final topBar = Row(children: [
       Text('-SEALED', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 2.4)),
       const Spacer(),
-      if (wide) ...[
-        _ServerPill(host: host, reachable: _reachable, onTap: _editServer),
-        const SizedBox(width: 14),
-      ],
-      GlassButton(height: 40, onPressed: _login, child: const Text('Sign in')),
-      const SizedBox(width: 8),
-      FilledButton(
-        style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 18)),
+      _ServerPill(host: host, reachable: _reachable, onTap: _editServer),
+    ]);
+
+    Widget actions({required bool stacked}) {
+      final create = FilledButton(
+        style: FilledButton.styleFrom(minimumSize: const Size(0, 46), padding: const EdgeInsets.symmetric(horizontal: 26)),
         onPressed: _register,
         child: const Text('Create account'),
-      ),
-    ]);
+      );
+      final signIn = GlassButton(height: 46, onPressed: _login, child: const Text('Sign in'));
+      return stacked
+          ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [create, const SizedBox(height: 10), signIn])
+          : Row(children: [create, const SizedBox(width: 12), signIn]);
+    }
 
     final body = wide
         ? Row(children: [
@@ -117,22 +120,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: headline),
                 const SizedBox(height: 20),
                 ConstrainedBox(constraints: const BoxConstraints(maxWidth: 440), child: lede),
-                const SizedBox(height: 32),
+                const SizedBox(height: 30),
+                actions(stacked: false),
+                const SizedBox(height: 30),
                 crypto,
               ]),
             ),
             const Expanded(flex: 6, child: Padding(padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24), child: lock)),
           ])
-        : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Expanded(child: Padding(padding: EdgeInsets.symmetric(vertical: 16), child: lock)),
-            headline,
-            const SizedBox(height: 14),
-            lede,
-            const SizedBox(height: 28),
-            Center(child: _ServerPill(host: host, reachable: _reachable, onTap: _editServer)),
-            const SizedBox(height: 16),
-            Center(child: crypto),
-          ]);
+        : null;
+
+    Widget narrow(BoxConstraints box) => Stack(children: [
+          const Positioned(left: 20, right: 20, top: 76, bottom: 380, child: lock),
+          Positioned.fill(
+            child: ElasticStretch(
+              child: SizedBox(
+                height: box.maxHeight,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    topBar,
+                    const Spacer(),
+                    headline,
+                    const SizedBox(height: 14),
+                    lede,
+                    const SizedBox(height: 24),
+                    actions(stacked: true),
+                    const SizedBox(height: 18),
+                    Center(child: crypto),
+                  ]),
+                ),
+              ),
+            ),
+          ),
+        ]);
 
     return Backdrop(
       behind: [
@@ -146,13 +167,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: wide ? 1200 : 460),
-              child: Padding(
-                padding: wide ? const EdgeInsets.fromLTRB(40, 20, 40, 32) : const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  topBar,
-                  Expanded(child: body),
-                ]),
-              ),
+              child: wide
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(40, 20, 40, 32),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        topBar,
+                        Expanded(child: body!),
+                      ]),
+                    )
+                  : LayoutBuilder(builder: (context, box) => narrow(box)),
             ),
           ),
         ),
