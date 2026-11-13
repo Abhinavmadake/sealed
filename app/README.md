@@ -1,17 +1,30 @@
-# sealed
+# Sealed app
 
-A new Flutter project.
+Flutter client for Sealed. Setup and run instructions are in the [top-level README](../README.md).
 
-## Getting Started
+## Layout
 
-This project is a starting point for a Flutter application.
+```
+lib/
+  main.dart           app start and root routing by vault status
+  core/
+    crypto/           key derivation, encrypt and decrypt, sharing (libsodium)
+    api/              HTTP client and response types
+    store/            local ciphertext store (sembast)
+    sync/             sync engine, three-way merge, vault repository
+    health/           strength, breach check, generator
+  models/             vault item
+  services/           vault session, auth flows, sharing
+  ui/                 screens
+test/                 host tests (no native code)
+integration_test/     device tests (real libsodium, live server)
+tool/test.sh          runs both
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Notes
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- The Dart package is `sealed_app` because `sealed` is a reserved word.
+- `sodium` is pinned to 4.0.4. Host tests run with `NIX_SKIP_SODIUM_BUILD_HOOKS=1`, so
+  anything that touches real crypto lives in `integration_test/`.
+- `flutter test integration_test` uninstalls the app afterwards and overwrites the debug APK,
+  so rebuild before reinstalling.
