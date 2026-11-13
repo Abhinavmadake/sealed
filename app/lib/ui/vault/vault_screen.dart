@@ -223,7 +223,13 @@ class _VaultScreenState extends State<VaultScreen> {
             const SizedBox(width: 12),
           ],
         ),
-        floatingActionButton: GlassButton(onPressed: _new, icon: const Icon(Icons.add), child: const Text('New')),
+        floatingActionButton: GlassButton(
+          onPressed: _new,
+          height: 66,
+          fontSize: 18,
+          icon: const Icon(Icons.add),
+          child: const Text('New'),
+        ),
         body: Column(
           children: [
             if (service.sessionExpired)

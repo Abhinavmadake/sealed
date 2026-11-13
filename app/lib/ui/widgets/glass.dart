@@ -91,12 +91,20 @@ class _RimPainter extends CustomPainter {
 
 /// A tappable glass pill.
 class GlassButton extends StatelessWidget {
-  const GlassButton({super.key, required this.onPressed, required this.child, this.icon, this.height = 52});
+  const GlassButton({
+    super.key,
+    required this.onPressed,
+    required this.child,
+    this.icon,
+    this.height = 52,
+    this.fontSize,
+  });
 
   final VoidCallback? onPressed;
   final Widget child;
   final Widget? icon;
   final double height;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +112,7 @@ class GlassButton extends StatelessWidget {
     final style = Theme.of(context).textTheme.labelLarge?.copyWith(
       fontWeight: FontWeight.w500,
       letterSpacing: 0.4,
+      fontSize: fontSize,
       color: onPressed == null ? scheme.onSurface.withValues(alpha: 0.38) : scheme.onSurface,
     );
     return Semantics(
@@ -118,14 +127,14 @@ class GlassButton extends StatelessWidget {
             child: SizedBox(
               height: height,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22),
+                padding: EdgeInsets.symmetric(horizontal: height * 0.42),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (icon != null) ...[
                       IconTheme.merge(
-                        data: IconThemeData(color: style?.color, size: 20),
+                        data: IconThemeData(color: style?.color, size: height * 0.4),
                         child: icon!,
                       ),
                       const SizedBox(width: 10),
