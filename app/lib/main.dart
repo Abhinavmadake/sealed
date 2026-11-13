@@ -12,6 +12,7 @@ import 'ui/onboarding/unlock_screen.dart';
 import 'ui/onboarding/welcome_screen.dart';
 import 'ui/theme.dart';
 import 'ui/vault/vault_screen.dart';
+import 'ui/widgets/stipple.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,14 +51,15 @@ class _SealedAppState extends State<SealedApp> {
         future: _boot,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
+            const ink = Graphite.chalk;
             return Directionality(
               textDirection: TextDirection.ltr,
               child: ColoredBox(
-                color: const Color(0xFFFBF8FF),
+                color: Graphite.ink,
                 child: Center(
                   child: snapshot.hasError
-                      ? Text('Could not start: ${snapshot.error}', style: const TextStyle(color: Color(0xFF1B1B21)))
-                      : const SizedBox(width: 32, height: 32, child: CircularProgressIndicator()),
+                      ? Text('Could not start: ${snapshot.error}', style: TextStyle(color: ink))
+                      : SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 1.5, color: ink)),
                 ),
               ),
             );
@@ -71,9 +73,10 @@ class _SealedAppState extends State<SealedApp> {
                 title: 'Sealed',
                 debugShowCheckedModeBanner: false,
                 navigatorKey: _navigator,
-                theme: buildTheme(Brightness.light),
-                darkTheme: buildTheme(Brightness.dark),
+                theme: buildTheme(Brightness.dark),
+                themeMode: ThemeMode.dark,
                 home: const _Root(),
+                builder: (context, child) => Stack(children: [child!, const Positioned.fill(child: GrainOverlay())]),
               ),
             ),
           );

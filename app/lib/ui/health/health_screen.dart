@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/health/breach.dart';
+import '../../core/health/strength.dart';
 import '../../core/health/vault_health.dart';
 import '../../models/vault_item.dart';
 import '../../services/vault_service.dart';
@@ -48,7 +49,11 @@ class _HealthScreenState extends State<HealthScreen> {
     final logins = items.where((i) => i.type == ItemType.login && i.password.isNotEmpty).toList();
     final score = report.score(_breached?.length ?? 0);
     final scheme = Theme.of(context).colorScheme;
-    final color = score >= 80 ? const Color(0xFF2E7D32) : score >= 50 ? const Color(0xFFF9A825) : scheme.error;
+    final color = score >= 80
+        ? StrengthMeter.colorFor(Strength.strong)
+        : score >= 50
+            ? StrengthMeter.colorFor(Strength.fair)
+            : scheme.error;
 
     Widget tile(VaultItem item, String why) => ListTile(
           leading: ItemAvatar(item),
@@ -67,7 +72,7 @@ class _HealthScreenState extends State<HealthScreen> {
             width: 120,
             height: 120,
             child: Stack(fit: StackFit.expand, children: [
-              CircularProgressIndicator(value: score / 100, strokeWidth: 10, color: color,
+              CircularProgressIndicator(value: score / 100, strokeWidth: 3, color: color,
                   backgroundColor: color.withValues(alpha: 0.15)),
               Center(child: Text('$score', style: Theme.of(context).textTheme.displaySmall)),
             ]),

@@ -11,18 +11,20 @@ import '../../models/vault_item.dart';
 import '../../services/auth_flow.dart';
 import '../../services/sharing.dart';
 import '../../services/vault_service.dart';
+import '../theme.dart';
+import 'stipple.dart';
 
 String friendlyError(Object error) => switch (error) {
-      OfflineException() => 'Cannot reach the server. Check your connection and try again.',
-      ApiException(:final message) => message[0].toUpperCase() + message.substring(1),
-      WrongPassword() => 'Wrong master password',
-      DecryptionFailed() => 'Could not decrypt. The data may be damaged or the key is wrong.',
-      KeyChanged() => error.toString(),
-      FormatException(:final message) => message,
-      StateError(:final message) => message,
-      ArgumentError(:final message) => '$message',
-      _ => 'Something went wrong: $error',
-    };
+  OfflineException() => 'Cannot reach the server. Check your connection and try again.',
+  ApiException(:final message) => message[0].toUpperCase() + message.substring(1),
+  WrongPassword() => 'Wrong master password',
+  DecryptionFailed() => 'Could not decrypt. The data may be damaged or the key is wrong.',
+  KeyChanged() => error.toString(),
+  FormatException(:final message) => message,
+  StateError(:final message) => message,
+  ArgumentError(:final message) => '$message',
+  _ => 'Something went wrong: $error',
+};
 
 Timer? _clipboardTimer;
 
@@ -38,12 +40,14 @@ Future<void> copySecret(BuildContext context, String value, String label) async 
       if (current?.text == value) await Clipboard.setData(const ClipboardData(text: ''));
     });
   }
-  messenger.showSnackBar(SnackBar(
-    content: Text(clearAfter > Duration.zero
-        ? '$label copied. Clipboard clears in ${clearAfter.inSeconds} s.'
-        : '$label copied'),
-    duration: const Duration(seconds: 2),
-  ));
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        clearAfter > Duration.zero ? '$label copied. Clipboard clears in ${clearAfter.inSeconds} s.' : '$label copied',
+      ),
+      duration: const Duration(seconds: 2),
+    ),
+  );
 }
 
 class PasswordField extends StatefulWidget {
@@ -89,30 +93,36 @@ class _PasswordFieldState extends State<PasswordField> {
       style: _hidden ? null : const TextStyle(fontFamily: 'monospace'),
       decoration: InputDecoration(
         labelText: widget.label,
-        suffixIcon: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (widget.onGenerate != null)
-            IconButton(tooltip: 'Generate', icon: const Icon(Icons.casino_outlined), onPressed: widget.onGenerate),
-          IconButton(
-            tooltip: _hidden ? 'Show' : 'Hide',
-            icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-            onPressed: () => setState(() => _hidden = !_hidden),
-          ),
-        ]),
+        suffixIcon: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.onGenerate != null)
+              IconButton(tooltip: 'Generate', icon: const Icon(Icons.casino_outlined), onPressed: widget.onGenerate),
+            IconButton(
+              tooltip: _hidden ? 'Show' : 'Hide',
+              icon: Icon(_hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+              onPressed: () => setState(() => _hidden = !_hidden),
+            ),
+          ],
+        ),
       ),
     );
     if (!widget.showStrength) return field;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      field,
-      ListenableBuilder(
-        listenable: widget.controller,
-        builder: (context, _) => widget.controller.text.isEmpty
-            ? const SizedBox(height: 8)
-            : Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: StrengthMeter(estimateStrength(widget.controller.text)),
-              ),
-      ),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        field,
+        ListenableBuilder(
+          listenable: widget.controller,
+          builder: (context, _) => widget.controller.text.isEmpty
+              ? const SizedBox(height: 8)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: StrengthMeter(estimateStrength(widget.controller.text)),
+                ),
+        ),
+      ],
+    );
   }
 }
 
@@ -124,34 +134,41 @@ class StrengthMeter extends StatelessWidget {
   static const labels = ['Very weak', 'Weak', 'Fair', 'Strong', 'Very strong'];
 
   static Color colorFor(Strength s) => switch (s) {
-        Strength.veryWeak => const Color(0xFFC62828),
-        Strength.weak => const Color(0xFFEF6C00),
-        Strength.fair => const Color(0xFFF9A825),
-        Strength.strong => const Color(0xFF2E7D32),
-        Strength.veryStrong => const Color(0xFF1B5E20),
-      };
+    Strength.veryWeak => const Color(0xFFB8452F),
+    Strength.weak => const Color(0xFFC27A36),
+    Strength.fair => const Color(0xFFA8903F),
+    Strength.strong => const Color(0xFF6F8C5F),
+    Strength.veryStrong => const Color(0xFF4F7A58),
+  };
 
   @override
   Widget build(BuildContext context) {
     final color = colorFor(result.level);
     final text = Theme.of(context).textTheme.bodySmall;
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: LinearProgressIndicator(
-          value: (result.level.index + 1) / labels.length,
-          color: color,
-          backgroundColor: color.withValues(alpha: 0.15),
-          minHeight: 6,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 3,
+                  margin: EdgeInsets.only(right: i == labels.length - 1 ? 0 : 4),
+                  color: i <= result.level.index ? color : color.withValues(alpha: 0.15),
+                ),
+              ),
+          ],
         ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        '${labels[result.level.index]} · about ${result.bits.round()} bits'
-        '${result.warning == null ? '' : ' · ${result.warning}'}',
-        style: text?.copyWith(color: color),
-      ),
-    ]);
+        const SizedBox(height: 4),
+        Text(
+          '${labels[result.level.index]} · about ${result.bits.round()} bits'
+          '${result.warning == null ? '' : ' · ${result.warning}'}',
+          style: text?.copyWith(color: color),
+        ),
+      ],
+    );
   }
 }
 
@@ -162,12 +179,12 @@ class ItemAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final letter = item.title.trim().isEmpty ? '?' : item.title.trim()[0].toUpperCase();
-    return CircleAvatar(
-      backgroundColor: item.type == ItemType.note ? scheme.tertiaryContainer : scheme.primaryContainer,
-      foregroundColor: item.type == ItemType.note ? scheme.onTertiaryContainer : scheme.onPrimaryContainer,
-      child: item.type == ItemType.note ? const Icon(Icons.sticky_note_2_outlined, size: 20) : Text(letter),
+    return SpeckleDisc(
+      seed: item.id,
+      child: item.type == ItemType.note
+          ? const Icon(Icons.notes, size: 18)
+          : Text(letter, style: serifAccent(context, size: 19)),
     );
   }
 }
@@ -184,7 +201,10 @@ class ErrorText extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: scheme.errorContainer, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: scheme.errorContainer,
+        border: Border(left: BorderSide(color: scheme.error, width: 2)),
+      ),
       child: Text(message!, style: TextStyle(color: scheme.onErrorContainer)),
     );
   }
@@ -201,12 +221,20 @@ class InfoCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: scheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(icon, color: scheme.onSecondaryContainer, size: 20),
-        const SizedBox(width: 12),
-        Expanded(child: Text(text, style: TextStyle(color: scheme.onSecondaryContainer))),
-      ]),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        border: Border(left: BorderSide(color: scheme.onSurface, width: 2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: scheme.onSurfaceVariant, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: TextStyle(color: scheme.onSurfaceVariant, height: 1.4)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -221,16 +249,23 @@ class BusyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FilledButton(
-        onPressed: busy ? null : onPressed,
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-        child: busy
-            ? Row(mainAxisSize: MainAxisSize.min, children: [
-                const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-                const SizedBox(width: 12),
-                Text(busyLabel ?? label),
-              ])
-            : Text(label),
-      );
+    onPressed: busy ? null : onPressed,
+    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+    child: busy
+        ? Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 1.5, color: Theme.of(context).colorScheme.onSurface),
+              ),
+              const SizedBox(width: 12),
+              Text(busyLabel ?? label),
+            ],
+          )
+        : Text(label),
+  );
 }
 
 class FormPage extends StatelessWidget {
@@ -242,19 +277,19 @@ class FormPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(title)),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Form(
-                key: formKey,
-                child: ListView(padding: const EdgeInsets.all(20), children: children),
-              ),
-            ),
+    appBar: AppBar(title: Text(title)),
+    body: SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Form(
+            key: formKey,
+            child: ListView(padding: const EdgeInsets.all(20), children: children),
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 String? validateEmail(String? v) {
