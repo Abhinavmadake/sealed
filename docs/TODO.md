@@ -6,5 +6,5 @@
 - [x] 4. Click through the phase 6 screens on the emulator (conflict, health, devices, change password, recovery, revoke)
 - [x] 5. Verify the web build in Chrome (headless render was blank)
 - [x] 6. Biometric unlock on Android
-- [ ] 7. Phase 7: end-to-end demo script (two devices, offline edits, database inspection)
+- [x] 7. Phase 7: end-to-end demo script (two devices, offline edits, database inspection)
 - [ ] 8. Phase 8: project documentation

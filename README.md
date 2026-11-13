@@ -6,6 +6,8 @@ decryption happens on the device, so a full database leak reveals no passwords.
 - `app/`: Flutter client (Android and web)
 - `server/`: FastAPI backend with PostgreSQL
 - `docs/PLAN.md`: scope, architecture, key hierarchy, API and known limits
+- `docs/DEMO.md`: demo script
+- `tools/second_device.py`: independent Python client used in the demo
 
 ## Features
 
