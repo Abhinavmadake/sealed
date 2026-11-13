@@ -2,13 +2,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'glass.dart';
+
 const _radius = 22.0;
 
-Color panelFill(BuildContext context) => Theme.of(context).colorScheme.surfaceContainerLow.withValues(alpha: 0.94);
+const panelFill = Color(0x52000000);
 
 const panelEdge = BorderSide(color: Color(0x1FFFFFFF), width: 0.8);
 
-/// A solid card that lifts content off the contour background.
+const _blur = 16.0;
+const _tint = 0.055;
+
+/// A frosted glass card that lifts content off the contour background.
 class Panel extends StatelessWidget {
   const Panel({super.key, required this.child, this.padding = EdgeInsets.zero});
 
@@ -16,11 +21,13 @@ class Panel extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: panelFill(context),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(_radius)), side: panelEdge),
-        clipBehavior: Clip.antiAlias,
-        child: Padding(padding: padding, child: child),
+  Widget build(BuildContext context) => Glass(
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(_radius))),
+        blur: _blur,
+        tint: _tint,
+        fill: panelFill,
+        grouped: true,
+        child: Material(type: MaterialType.transparency, child: Padding(padding: padding, child: child)),
       );
 }
 
@@ -54,18 +61,55 @@ class GroupCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const r = Radius.circular(_radius);
-    return Material(
-      color: panelFill(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: first ? r : Radius.zero, bottom: last ? r : Radius.zero),
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: first ? r : Radius.zero, bottom: last ? r : Radius.zero),
+    );
+    return Glass(
+      shape: shape,
+      blur: _blur,
+      tint: _tint,
+      fill: panelFill,
+      grouped: true,
+      flat: true,
+      rim: false,
+      child: CustomPaint(
+        foregroundPainter: _CellRim(shape, first, last),
+        child: Material(
+          type: MaterialType.transparency,
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            child,
+            if (!last) Divider(height: 1, indent: dividerIndent),
+          ]),
+        ),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        child,
-        if (!last) Divider(height: 1, indent: dividerIndent),
-      ]),
     );
   }
+}
+
+/// The outline of a grouped list, drawn piecewise so the edges between rows stay open.
+class _CellRim extends CustomPainter {
+  _CellRim(this.shape, this.first, this.last);
+
+  final ShapeBorder shape;
+  final bool first;
+  final bool last;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.clipRect(Rect.fromLTRB(-2, first ? -2 : 1, size.width + 2, last ? size.height + 2 : size.height - 1));
+    canvas.drawPath(
+      shape.getOuterPath((Offset.zero & size).deflate(0.4)),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8
+        ..color = const Color(0x24FFFFFF),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_CellRim old) => old.first != first || old.last != last || old.shape != shape;
 }
 
 /// A small uppercase label above a panel.

@@ -255,7 +255,7 @@ class ContourPage extends StatelessWidget {
           const Positioned.fill(
             child: TopoBackground(seed: 8, focus: Alignment(0.7, -0.65), peak: 0.9, levels: 24, fadeTo: 0.3),
           ),
-          Positioned.fill(child: child),
+          Positioned.fill(child: BackdropGroup(child: child)),
         ]),
       );
 }

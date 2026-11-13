@@ -10,40 +10,57 @@ class Glass extends StatelessWidget {
     this.shape = const StadiumBorder(),
     this.blur = 18,
     this.tint = 0.07,
+    this.fill,
     this.padding = EdgeInsets.zero,
+    this.grouped = false,
+    this.flat = false,
+    this.rim = true,
   });
 
   final Widget child;
   final ShapeBorder shape;
   final double blur;
   final double tint;
+
+  /// A dark base under the tint, for glass that has to keep text readable.
+  final Color? fill;
   final EdgeInsetsGeometry padding;
+
+  /// Shares one backdrop pass with the other grouped glass under the nearest [BackdropGroup].
+  final bool grouped;
+
+  /// An even tint instead of the diagonal sheen, for rows that sit edge to edge.
+  final bool flat;
+  final bool rim;
 
   @override
   Widget build(BuildContext context) {
-    final surface = CustomPaint(
-      foregroundPainter: _RimPainter(shape),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: shape,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: tint * 2.1),
-              Colors.white.withValues(alpha: tint * 0.6),
-              Colors.white.withValues(alpha: tint),
-            ],
-            stops: const [0, 0.55, 1],
-          ),
-        ),
-        child: Padding(padding: padding, child: child),
+    Widget surface = DecoratedBox(
+      decoration: ShapeDecoration(
+        shape: shape,
+        color: flat ? Colors.white.withValues(alpha: tint) : null,
+        gradient: flat
+            ? null
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: tint * 2.1),
+                  Colors.white.withValues(alpha: tint * 0.6),
+                  Colors.white.withValues(alpha: tint),
+                ],
+                stops: const [0, 0.55, 1],
+              ),
       ),
+      child: Padding(padding: padding, child: child),
     );
+    if (fill != null) surface = DecoratedBox(decoration: ShapeDecoration(shape: shape, color: fill), child: surface);
+    if (rim) surface = CustomPaint(foregroundPainter: _RimPainter(shape), child: surface);
     if (blur <= 0) return surface;
+    final filter = ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur);
     return ClipPath(
       clipper: ShapeBorderClipper(shape: shape),
-      child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: blur, sigmaY: blur), child: surface),
+      child: grouped ? BackdropFilter.grouped(filter: filter, child: surface) : BackdropFilter(filter: filter, child: surface),
     );
   }
 }
@@ -168,7 +185,7 @@ class Backdrop extends StatelessWidget {
     child: Stack(
       children: [
         ...behind,
-        Positioned.fill(child: child),
+        Positioned.fill(child: BackdropGroup(child: child)),
       ],
     ),
   );
