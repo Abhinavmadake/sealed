@@ -8,6 +8,7 @@ import '../../models/vault_item.dart';
 import '../../services/vault_service.dart';
 import '../vault/item_detail_screen.dart';
 import '../widgets/common.dart';
+import '../widgets/panel.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});
@@ -65,8 +66,10 @@ class _HealthScreenState extends State<HealthScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Vault health')),
-      body: ListView(children: [
-        const SizedBox(height: 16),
+      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
+        Panel(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+          child: Column(children: [
         Center(
           child: SizedBox(
             width: 120,
@@ -81,9 +84,7 @@ class _HealthScreenState extends State<HealthScreen> {
         const SizedBox(height: 8),
         Center(child: Text('${report.checked} passwords checked')),
         const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(children: [
+        Column(children: [
             const InfoCard(
               icon: Icons.privacy_tip_outlined,
               text: 'The breach check uses Have I Been Pwned. Only the first 5 characters of each '
@@ -98,21 +99,27 @@ class _HealthScreenState extends State<HealthScreen> {
               onPressed: logins.isEmpty ? null : () => _check(logins),
             ),
           ]),
+          ]),
         ),
         if (_breached != null) ...[
-          ListTile(title: Text('Breached (${_breached!.length})', style: Theme.of(context).textTheme.titleMedium)),
-          if (_breached!.isEmpty) const ListTile(title: Text('None of your passwords appear in known breaches.')),
-          for (final item in logins.where((i) => _breached!.containsKey(i.id)))
-            tile(item, 'Seen ${_breached![item.id]} times in breaches. Change it.'),
+          SectionLabel('Breached (${_breached!.length})'),
+          PanelGroup(dividerIndent: 72, children: [
+            if (_breached!.isEmpty) const ListTile(title: Text('None of your passwords appear in known breaches.')),
+            for (final item in logins.where((i) => _breached!.containsKey(i.id)))
+              tile(item, 'Seen ${_breached![item.id]} times in breaches. Change it.'),
+          ]),
         ],
-        ListTile(title: Text('Weak (${report.weak.length})', style: Theme.of(context).textTheme.titleMedium)),
-        if (report.weak.isEmpty) const ListTile(title: Text('No weak passwords.')),
-        for (final (item, s) in report.weak) tile(item, s.warning ?? 'Easy to guess'),
-        ListTile(title: Text('Reused (${report.reusedCount})', style: Theme.of(context).textTheme.titleMedium)),
-        if (report.reused.isEmpty) const ListTile(title: Text('Every password is unique.')),
-        for (final group in report.reused)
-          for (final item in group) tile(item, 'Same password as ${group.length - 1} other item(s)'),
-        const SizedBox(height: 32),
+        SectionLabel('Weak (${report.weak.length})'),
+        PanelGroup(dividerIndent: 72, children: [
+          if (report.weak.isEmpty) const ListTile(title: Text('No weak passwords.')),
+          for (final (item, s) in report.weak) tile(item, s.warning ?? 'Easy to guess'),
+        ]),
+        SectionLabel('Reused (${report.reusedCount})'),
+        PanelGroup(dividerIndent: 72, children: [
+          if (report.reused.isEmpty) const ListTile(title: Text('Every password is unique.')),
+          for (final group in report.reused)
+            for (final item in group) tile(item, 'Same password as ${group.length - 1} other item(s)'),
+        ]),
       ]),
     );
   }

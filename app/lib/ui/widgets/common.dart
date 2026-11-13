@@ -12,6 +12,7 @@ import '../../services/auth_flow.dart';
 import '../../services/sharing.dart';
 import '../../services/vault_service.dart';
 import '../theme.dart';
+import 'panel.dart';
 import 'stipple.dart';
 
 String friendlyError(Object error) => switch (error) {
@@ -284,7 +285,15 @@ class FormPage extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 520),
           child: Form(
             key: formKey,
-            child: ListView(padding: const EdgeInsets.all(20), children: children),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              children: [
+                Panel(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+                ),
+              ],
+            ),
           ),
         ),
       ),

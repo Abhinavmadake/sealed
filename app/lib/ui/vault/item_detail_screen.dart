@@ -6,6 +6,7 @@ import '../../models/vault_item.dart';
 import '../../services/vault_service.dart';
 import '../sharing/share_screen.dart';
 import '../widgets/common.dart';
+import '../widgets/panel.dart';
 import 'conflict_screen.dart';
 import 'item_edit_screen.dart';
 
@@ -74,6 +75,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       );
     }
 
+    final login = item.type == ItemType.login;
+    final fields = <Widget>[
+      if (login && item.username.isNotEmpty) field('Username', item.username),
+      if (login && item.password.isNotEmpty)
+        Column(mainAxisSize: MainAxisSize.min, children: [
+          field('Password', item.password, secret: true),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+            child: StrengthMeter(estimateStrength(item.password)),
+          ),
+        ]),
+      if (login && item.url.isNotEmpty) field('Website', item.url),
+      if (item.notes.isNotEmpty) field('Notes', item.notes),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -101,9 +117,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             IconButton(tooltip: 'Delete', icon: const Icon(Icons.delete_outline), onPressed: () => _delete(service, item)),
         ],
       ),
-      body: ListView(children: [
+      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          padding: const EdgeInsets.fromLTRB(6, 8, 6, 20),
           child: Row(children: [
             Transform.scale(scale: 1.3, child: ItemAvatar(item)),
             const SizedBox(width: 20),
@@ -112,7 +128,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
         if (entry.inConflict)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.only(bottom: 12),
             child: Card(
               color: scheme.errorContainer,
               child: ListTile(
@@ -127,7 +143,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ),
         if (entry.sharedWithMe)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.only(bottom: 12),
             child: InfoCard(
               icon: Icons.people_outline,
               text: 'Shared with you by ${entry.sharedBy}. '
@@ -135,23 +151,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   'Their fingerprint: ${service.crypto.fingerprint(entry.remote!.grantedByPublicKey!)}',
             ),
           ),
-        if (item.type == ItemType.login) ...[
-          field('Username', item.username),
-          field('Password', item.password, secret: true),
-          if (item.password.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: StrengthMeter(estimateStrength(item.password)),
-            ),
-          field('Website', item.url),
-        ],
-        field('Notes', item.notes, mono: false),
-        const Divider(height: 32),
-        ListTile(
-          dense: true,
-          leading: Icon(entry.synced ? Icons.cloud_done_outlined : Icons.cloud_upload_outlined, size: 20),
-          title: Text(entry.synced ? 'Synced' : 'Waiting to sync'),
-          subtitle: Text('Last changed ${_when(item.modifiedAt)}'),
+        if (fields.isNotEmpty) PanelGroup(children: fields),
+        const SizedBox(height: 12),
+        Panel(
+          child: ListTile(
+            dense: true,
+            leading: Icon(entry.synced ? Icons.cloud_done_outlined : Icons.cloud_upload_outlined, size: 20),
+            title: Text(entry.synced ? 'Synced' : 'Waiting to sync'),
+            subtitle: Text('Last changed ${_when(item.modifiedAt)}'),
+          ),
         ),
       ]),
     );

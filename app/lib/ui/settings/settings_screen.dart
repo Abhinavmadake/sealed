@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/biometric/biometric_key_store.dart';
 import '../../services/vault_service.dart';
 import '../widgets/common.dart';
+import '../widgets/panel.dart';
 import 'change_password_screen.dart';
 import 'devices_screen.dart';
 
@@ -49,18 +50,13 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = context.watch<VaultService>();
-    final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
-
-    Widget header(String label) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-          child: Text(label, style: text.labelLarge?.copyWith(color: scheme.primary)),
-        );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: ListView(children: [
-        header('Account'),
+      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
+        const SectionLabel('Account'),
+        PanelGroup(dividerIndent: 72, children: [
         ListTile(leading: const Icon(Icons.person_outline), title: Text(service.email), subtitle: Text(service.record?.serverUrl ?? '')),
         ListTile(
           leading: const Icon(Icons.fingerprint),
@@ -68,7 +64,9 @@ class SettingsScreen extends StatelessWidget {
           subtitle: SelectableText(service.fingerprint, style: const TextStyle(fontFamily: 'monospace', fontSize: 16)),
           isThreeLine: true,
         ),
-        header('Security'),
+        ]),
+        const SectionLabel('Security'),
+        PanelGroup(dividerIndent: 72, children: [
         ListTile(
           leading: const Icon(Icons.timer_outlined),
           title: const Text('Lock after inactivity'),
@@ -131,7 +129,9 @@ class SettingsScreen extends StatelessWidget {
             if (ok == true) await service.signOut();
           },
         ),
-        header('About'),
+        ]),
+        const SectionLabel('About'),
+        PanelGroup(children: [
         const ListTile(
           leading: Icon(Icons.shield_outlined),
           title: Text('How Sealed protects you'),
@@ -142,7 +142,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           isThreeLine: true,
         ),
-        const SizedBox(height: 24),
+        ]),
       ]),
     );
   }

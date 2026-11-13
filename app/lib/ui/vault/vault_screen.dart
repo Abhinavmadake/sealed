@@ -10,6 +10,7 @@ import '../settings/settings_screen.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/glass.dart';
+import '../widgets/panel.dart';
 import '../widgets/stipple.dart';
 import '../widgets/topo.dart';
 import 'item_detail_screen.dart';
@@ -277,8 +278,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 ],
               ),
             ),
-            const Divider(height: 1, indent: 20, endIndent: 20),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: service.sync,
@@ -298,9 +298,14 @@ class _VaultScreenState extends State<VaultScreen> {
                         ],
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 96),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
                         itemCount: visible.length,
-                        itemBuilder: (context, i) => _EntryTile(visible[i]),
+                        itemBuilder: (context, i) => GroupCell(
+                          first: i == 0,
+                          last: i == visible.length - 1,
+                          dividerIndent: 76,
+                          child: _EntryTile(visible[i]),
+                        ),
                       ),
               ),
             ),

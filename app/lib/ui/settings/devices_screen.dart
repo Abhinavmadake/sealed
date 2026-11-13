@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/dto.dart';
 import '../../services/vault_service.dart';
 import '../widgets/common.dart';
+import '../widgets/panel.dart';
 
 class DevicesScreen extends StatefulWidget {
   const DevicesScreen({super.key});
@@ -53,10 +54,12 @@ class _DevicesScreenState extends State<DevicesScreen> {
         appBar: AppBar(title: const Text('Signed-in devices')),
         body: RefreshIndicator(
           onRefresh: _load,
-          child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
+          child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
             if (_error != null) Padding(padding: const EdgeInsets.all(16), child: ErrorText(_error)),
             if (_sessions == null && _error == null) const LinearProgressIndicator(),
-            for (final s in _sessions ?? const <SessionInfo>[])
+            if (_sessions != null && _sessions!.isNotEmpty)
+            PanelGroup(dividerIndent: 72, children: [
+            for (final s in _sessions!)
               ListTile(
                 leading: Icon(s.current ? Icons.smartphone : Icons.devices_other),
                 title: Text(s.current ? '${s.deviceName} (this device)' : s.deviceName),
@@ -65,6 +68,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
                     ? null
                     : TextButton(onPressed: () => _end(s), child: const Text('Sign out')),
               ),
+            ]),
           ]),
         ),
       );
