@@ -145,18 +145,16 @@ class _VaultScreenState extends State<VaultScreen> {
 
     return Backdrop(
       behind: const [
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 360,
-          child: TopoBackground(seed: 4, focus: Alignment(0.75, -0.55), peak: 0.9, fadeBottom: true),
+        Positioned.fill(
+          child: TopoBackground(seed: 4, focus: Alignment(0.75, -0.6), peak: 0.9, levels: 24, fadeTo: 0.3),
         ),
       ],
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
+          toolbarHeight: 76,
+          titleSpacing: 20,
           title: _searching
               ? TextField(
                   controller: _search,
@@ -258,7 +256,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 ],
               ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: PillTabs<_Filter>(
@@ -270,7 +268,7 @@ class _VaultScreenState extends State<VaultScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
               child: Row(
                 children: [
                   Text('${visible.length} ${visible.length == 1 ? 'ITEM' : 'ITEMS'}', style: eyebrow(context)),
@@ -280,6 +278,7 @@ class _VaultScreenState extends State<VaultScreen> {
               ),
             ),
             const Divider(height: 1, indent: 20, endIndent: 20),
+            const SizedBox(height: 8),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: service.sync,

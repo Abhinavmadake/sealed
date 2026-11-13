@@ -13,6 +13,7 @@ class TopoBackground extends StatelessWidget {
     this.seed = 1,
     this.levels = 22,
     this.fadeBottom = false,
+    this.fadeTo,
     this.opacity = 1,
   });
 
@@ -21,6 +22,7 @@ class TopoBackground extends StatelessWidget {
   final int seed;
   final int levels;
   final bool fadeBottom;
+  final double? fadeTo;
   final double opacity;
 
   @override
@@ -32,14 +34,16 @@ class TopoBackground extends StatelessWidget {
         painter: _TopoPainter(_TopoSpec(focus, peak, seed, levels), ink.withValues(alpha: opacity)),
       ),
     );
-    if (fadeBottom) {
+    if (fadeBottom || fadeTo != null) {
+      final end = Colors.white.withValues(alpha: fadeTo ?? 0);
+      final hold = fadeTo == null ? 0.35 : 0.55;
       lines = ShaderMask(
         blendMode: BlendMode.dstIn,
-        shaderCallback: (rect) => const LinearGradient(
+        shaderCallback: (rect) => LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Colors.white, Colors.white, Colors.transparent],
-          stops: [0, 0.35, 1],
+          colors: [Colors.white, Colors.white, end],
+          stops: [0, hold, 1],
         ).createShader(rect),
         child: lines,
       );
@@ -199,4 +203,38 @@ class _TopoPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_TopoPainter old) => old.spec != spec || old.ink != ink;
+}
+
+/// Gives every pushed page the graphite base and a contour field, then runs the usual zoom transition.
+class ContourPageTransitions extends PageTransitionsBuilder {
+  const ContourPageTransitions();
+
+  static const _inner = ZoomPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) =>
+      _inner.buildTransitions(route, context, animation, secondaryAnimation, ContourPage(child: child));
+}
+
+class ContourPage extends StatelessWidget {
+  const ContourPage({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: Theme.of(context).colorScheme.surface,
+        child: Stack(children: [
+          const Positioned.fill(
+            child: TopoBackground(seed: 8, focus: Alignment(0.7, -0.65), peak: 0.9, levels: 24, fadeTo: 0.3),
+          ),
+          Positioned.fill(child: child),
+        ]),
+      );
 }

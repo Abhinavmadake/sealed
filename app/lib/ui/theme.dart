@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'widgets/topo.dart';
+
 const serifFamily = 'serif';
 
 abstract final class Graphite {
@@ -111,11 +113,19 @@ ThemeData buildTheme(Brightness brightness) {
     useMaterial3: true,
     colorScheme: s,
     textTheme: text,
-    scaffoldBackgroundColor: s.surface,
+    scaffoldBackgroundColor: Colors.transparent,
+    pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      TargetPlatform.android: ContourPageTransitions(),
+      TargetPlatform.iOS: ContourPageTransitions(),
+      TargetPlatform.macOS: ContourPageTransitions(),
+      TargetPlatform.linux: ContourPageTransitions(),
+      TargetPlatform.windows: ContourPageTransitions(),
+      TargetPlatform.fuchsia: ContourPageTransitions(),
+    }),
     canvasColor: s.surface,
     splashFactory: InkSparkle.splashFactory,
     appBarTheme: AppBarTheme(
-      backgroundColor: s.surface,
+      backgroundColor: Colors.transparent,
       foregroundColor: s.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
