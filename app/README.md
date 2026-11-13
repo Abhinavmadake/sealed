@@ -9,6 +9,7 @@ lib/
   main.dart           app start and root routing by vault status
   core/
     crypto/           key derivation, encrypt and decrypt, sharing (libsodium)
+    biometric/        fingerprint unlock (flutter_secure_storage, local_auth)
     api/              HTTP client and response types
     store/            local ciphertext store (sembast)
     sync/             sync engine, three-way merge, vault repository
@@ -28,3 +29,6 @@ tool/test.sh          runs both
   anything that touches real crypto lives in `integration_test/`.
 - `flutter test integration_test` uninstalls the app afterwards and overwrites the debug APK,
   so rebuild before reinstalling.
+- Fingerprint unlock uses `flutter_secure_storage` 11 in per-operation biometric mode. The plugin
+  never reports the prompt's negative button, so the unlock screen does not wait on that call.
+  On the emulator, `adb emu finger touch 1` holds the finger down until `adb emu finger remove`.

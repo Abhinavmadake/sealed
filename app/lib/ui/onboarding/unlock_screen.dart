@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/biometric/biometric_key_store.dart';
 import '../../services/vault_service.dart';
 import '../widgets/common.dart';
 
@@ -28,6 +29,26 @@ class _UnlockScreenState extends State<UnlockScreen> {
       if (mounted) setState(() => _error = friendlyError(e));
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (context.read<VaultService>().biometricEnabled) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _biometric());
+    }
+  }
+
+  // Not tied to _busy: the plugin never reports the prompt's negative button, so this may not return.
+  Future<void> _biometric() async {
+    setState(() => _error = null);
+    try {
+      await context.read<VaultService>().unlockWithBiometric();
+    } on BiometricCancelled {
+      // Fall back to the password field.
+    } catch (e) {
+      if (mounted) setState(() => _error = friendlyError(e));
     }
   }
 
@@ -73,6 +94,14 @@ class _UnlockScreenState extends State<UnlockScreen> {
               ),
               const SizedBox(height: 20),
               BusyButton(label: 'Unlock', busyLabel: 'Unlocking…', busy: _busy, onPressed: _unlock),
+              if (service.biometricEnabled) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _biometric,
+                  icon: const Icon(Icons.fingerprint),
+                  label: const Text('Use fingerprint'),
+                ),
+              ],
               const SizedBox(height: 8),
               TextButton(onPressed: _signOut, child: const Text('Not you? Sign out')),
             ]),

@@ -16,6 +16,7 @@ decryption happens on the device, so a full database leak reveals no passwords.
 - Change the master password, recover with a recovery key
 - Password generator and vault health (weak, reused, breached)
 - Device list with remote sign-out, auto-lock, clipboard auto-clear
+- Fingerprint unlock on Android
 
 ## Requirements
 

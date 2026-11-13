@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 
 import '../core/api/api_client.dart';
 import '../core/api/dto.dart';
+import '../core/biometric/biometric_key_store.dart';
 import '../core/crypto/account_keys.dart';
 import '../core/crypto/sealed_crypto.dart';
 import '../core/store/local_store.dart';
@@ -35,11 +36,14 @@ String get deviceName {
 }
 
 class VaultService extends ChangeNotifier with WidgetsBindingObserver {
-  VaultService(this.crypto, this.store) : auth = AuthFlow(crypto, store);
+  VaultService(this.crypto, this.store, {BiometricKeyStore? biometric})
+      : auth = AuthFlow(crypto, store),
+        biometric = biometric ?? BiometricKeyStore();
 
   final SealedCrypto crypto;
   final LocalStore store;
   final AuthFlow auth;
+  final BiometricKeyStore biometric;
 
   VaultStatus status = VaultStatus.loading;
   AccountRecord? record;
@@ -55,6 +59,8 @@ class VaultService extends ChangeNotifier with WidgetsBindingObserver {
 
   Duration autoLock = const Duration(minutes: 5);
   Duration clipboardClear = const Duration(seconds: 30);
+  bool biometricAvailable = false;
+  bool biometricEnabled = false;
 
   UnlockedAccount? _account;
   ApiClient? _api;
@@ -79,6 +85,8 @@ class VaultService extends ChangeNotifier with WidgetsBindingObserver {
     autoLock = Duration(seconds: settings['auto_lock_seconds'] as int? ?? 300);
     clipboardClear = Duration(seconds: settings['clipboard_seconds'] as int? ?? 30);
     record = await store.account();
+    biometricAvailable = await biometric.available();
+    biometricEnabled = biometricAvailable && record != null && settings['biometric_user'] == record!.userId;
     status = record == null ? VaultStatus.noAccount : VaultStatus.locked;
     notifyListeners();
   }
@@ -120,6 +128,63 @@ class VaultService extends ChangeNotifier with WidgetsBindingObserver {
     final api = ApiClient(record!.serverUrl)..token = await auth.token(account);
     await _open(account, api);
   }
+
+  /// Unlocks with the copy of the account key that the fingerprint releases.
+  Future<void> unlockWithBiometric() async {
+    final record = this.record!;
+    final Uint8List? bytes;
+    try {
+      bytes = await biometric.load(record.userId);
+    } on BiometricCancelled {
+      rethrow;
+    } on Exception {
+      // Android drops the Keystore key when fingerprints change.
+      await disableBiometric();
+      throw StateError('Fingerprint unlock was reset. Use your master password, then turn it on again.');
+    }
+    if (unlocked) return;
+    if (bytes == null) {
+      await disableBiometric();
+      throw StateError('Fingerprint unlock is not set up. Use your master password.');
+    }
+    final accountKey = crypto.keyFromBytes(bytes);
+    final UnlockedAccount account;
+    try {
+      account = auth.keys.unlockWithAccountKey(accountKey,
+          publicKey: record.publicKey, wrappedPrivateKey: record.wrappedPrivateKey);
+    } catch (_) {
+      accountKey.dispose();
+      rethrow;
+    }
+    final api = ApiClient(record.serverUrl)..token = await auth.token(account);
+    await _open(account, api);
+  }
+
+  Future<void> enableBiometric() async {
+    final bytes = _account!.accountKey.extractBytes();
+    try {
+      await biometric.save(record!.userId, bytes);
+    } finally {
+      bytes.fillRange(0, bytes.length, 0);
+    }
+    biometricEnabled = true;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> disableBiometric() async {
+    final userId = record?.userId;
+    if (userId != null) await biometric.clear(userId);
+    biometricEnabled = false;
+    await _saveSettings();
+    notifyListeners();
+  }
+
+  Future<void> _saveSettings() => store.saveSettings({
+        'auto_lock_seconds': autoLock.inSeconds,
+        'clipboard_seconds': clipboardClear.inSeconds,
+        if (biometricEnabled) 'biometric_user': record!.userId,
+      });
 
   /// Signs in again after the server ended this session, for example after a password change.
   Future<void> reauthenticate(String password) async {
@@ -165,6 +230,7 @@ class VaultService extends ChangeNotifier with WidgetsBindingObserver {
       // The local data is wiped either way.
     }
     lock();
+    await disableBiometric();
     await store.clearAll();
     record = null;
     status = VaultStatus.noAccount;
@@ -276,10 +342,7 @@ class VaultService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> updateSettings({Duration? autoLock, Duration? clipboardClear}) async {
     if (autoLock != null) this.autoLock = autoLock;
     if (clipboardClear != null) this.clipboardClear = clipboardClear;
-    await store.saveSettings({
-      'auto_lock_seconds': this.autoLock.inSeconds,
-      'clipboard_seconds': this.clipboardClear.inSeconds,
-    });
+    await _saveSettings();
     touch();
     notifyListeners();
   }

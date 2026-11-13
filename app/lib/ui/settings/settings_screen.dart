@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/biometric/biometric_key_store.dart';
 import '../../services/vault_service.dart';
+import '../widgets/common.dart';
 import 'change_password_screen.dart';
 import 'devices_screen.dart';
 
@@ -81,6 +83,23 @@ class SettingsScreen extends StatelessWidget {
           onTap: () => _pick(context, 'Clear clipboard after', _clipboardChoices, service.clipboardClear,
               (d) => service.updateSettings(clipboardClear: d)),
         ),
+        if (service.biometricAvailable)
+          SwitchListTile(
+            secondary: const Icon(Icons.fingerprint),
+            title: const Text('Unlock with fingerprint'),
+            subtitle: const Text('Your master password still works and is needed to sign in.'),
+            value: service.biometricEnabled,
+            onChanged: (on) async {
+              final messenger = ScaffoldMessenger.of(context);
+              try {
+                on ? await service.enableBiometric() : await service.disableBiometric();
+              } on BiometricCancelled {
+                return;
+              } catch (e) {
+                messenger.showSnackBar(SnackBar(content: Text(friendlyError(e))));
+              }
+            },
+          ),
         ListTile(
           leading: const Icon(Icons.password),
           title: const Text('Change master password'),

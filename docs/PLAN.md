@@ -59,6 +59,7 @@ account key (random, fixed for the life of the account)
    |-- wraps the user's X25519 private key
    |-- wraps every item key the user holds
    |-- wraps the session token in the local store
+   |-- optional copy under an Android Keystore key that a fingerprint releases
 
 item key (random, one per item)
    |-- encrypts the item JSON
@@ -81,6 +82,10 @@ Decisions worth defending:
 - **`crypto_box`, not sealed boxes, for sharing.** A sealed box is anonymous, so the server could
   forge a shared item. `crypto_box` proves which user sent it.
 - **KDF floor on the client.** A malicious server cannot weaken Argon2 by sending low parameters.
+- **Fingerprint unlock releases the account key, not the password.** A copy of the account key is
+  encrypted with an AES key that lives in the Android Keystore, requires a strong biometric for
+  every use and is dropped by Android when fingerprints change. The master password is never
+  stored, and signing in on a new device still needs it.
 - **Fingerprints for sharing.** The server hands out public keys, so it could substitute its own.
   The app shows a fingerprint both people can compare.
 
@@ -145,6 +150,8 @@ Stated in the documentation rather than hidden:
 - Read-only sharing is enforced by the server, not by cryptography.
 - Forgetting both the master password and the recovery key loses the vault. That is the cost of
   zero knowledge.
+- Fingerprint unlock is only as strong as the device: with it on, a Keystore compromise or a forced
+  fingerprint opens the vault without the master password. It is off by default.
 - Dart cannot reliably wipe strings from memory, so decrypted item text can linger until collected.
 
 ## 8. File structure
@@ -179,6 +186,7 @@ sealed/
       main.dart
       core/
         crypto/             key derivation, encrypt and decrypt, sharing
+        biometric/          account key copy behind the Android Keystore
         api/                HTTP client
         store/              local ciphertext store
         sync/               sync engine and three-way merge
