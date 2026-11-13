@@ -75,6 +75,17 @@ class StippleLock extends StatefulWidget {
 class _StippleLockState extends State<StippleLock> with SingleTickerProviderStateMixin {
   late final _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
   _Cloud? _cloud;
+  Rect? _screen;
+
+  void _measure() {
+    if (!mounted || !widget.dust) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return;
+    final origin = box.localToGlobal(Offset.zero);
+    final screen = MediaQuery.sizeOf(context);
+    final rect = Rect.fromLTWH(-origin.dx, -origin.dy, screen.width, screen.height);
+    if (_screen != rect) setState(() => _screen = rect);
+  }
 
   @override
   void didChangeDependencies() {
@@ -97,10 +108,11 @@ class _StippleLockState extends State<StippleLock> with SingleTickerProviderStat
     final ink = Theme.of(context).colorScheme.onSurface;
     final screen = MediaQuery.sizeOf(context);
     final reach = math.sqrt(screen.width * screen.width + screen.height * screen.height) / 2;
+    if (widget.dust) WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
     return LayoutBuilder(builder: (context, box) {
       final size = Size(box.maxWidth, box.maxHeight);
-      if (_cloud?.size != size || _cloud?.reach != reach) {
-        _cloud = _Cloud.lock(size, reach, widget.seed, widget.dust);
+      if (_cloud?.size != size || _cloud?.reach != reach || _cloud?.screen != _screen) {
+        _cloud = _Cloud.lock(size, reach, widget.seed, widget.dust ? _screen : null);
       }
       return RepaintBoundary(
         child: CustomPaint(size: size, painter: _CloudPainter(_cloud!, _controller, ink)),
@@ -110,10 +122,11 @@ class _StippleLockState extends State<StippleLock> with SingleTickerProviderStat
 }
 
 class _Cloud {
-  _Cloud(this.size, this.reach, this.target, this.start, this.delay, this.bucket);
+  _Cloud(this.size, this.reach, this.screen, this.target, this.start, this.delay, this.bucket);
 
   final Size size;
   final double reach;
+  final Rect? screen;
   final Float32List target;
   final Float32List start;
   final Float32List delay;
@@ -125,7 +138,7 @@ class _Cloud {
 
   int get length => delay.length;
 
-  factory _Cloud.lock(Size size, double reach, int seed, bool dust) {
+  factory _Cloud.lock(Size size, double reach, int seed, Rect? screen) {
     final rng = math.Random(seed);
     final side = math.min(size.width, size.height / 1.1);
     final ox = (size.width - side) / 2;
@@ -134,11 +147,7 @@ class _Cloud {
     final candidates = math.min((size.width * size.height * 1.7).round(), 420000);
     final tx = <double>[], ty = <double>[], sx = <double>[], sy = <double>[], dl = <double>[];
     final bk = <int>[];
-    for (var i = 0; i < candidates; i++) {
-      final x = rng.nextDouble() * size.width;
-      final y = rng.nextDouble() * size.height;
-      final d = _lockDensity((x - ox) / side, (y - oy) / side, dust);
-      if (rng.nextDouble() >= d) continue;
+    void add(double x, double y) {
       tx.add(x);
       ty.add(y);
       final angle = rng.nextDouble() * math.pi * 2;
@@ -149,6 +158,35 @@ class _Cloud {
       final r = rng.nextDouble();
       bk.add(r < 0.72 ? 0 : (r < 0.95 ? 1 : 2));
     }
+
+    for (var i = 0; i < candidates; i++) {
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * size.height;
+      final d = _lockDensity((x - ox) / side, (y - oy) / side);
+      if (rng.nextDouble() >= d) continue;
+      add(x, y);
+    }
+    if (screen != null) {
+      final fade = 0.16 * math.min(screen.width, screen.height);
+      final extent = math.max(
+        math.max((screen.left - cx).abs(), (screen.right - cx).abs()),
+        math.max((screen.top - cy).abs(), (screen.bottom - cy).abs()),
+      );
+      final dustCandidates = math.min((screen.width * screen.height * 0.12).round(), 260000);
+      for (var i = 0; i < dustCandidates; i++) {
+        final x = screen.left + rng.nextDouble() * screen.width;
+        final y = screen.top + rng.nextDouble() * screen.height;
+        final r = math.sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy)) / extent;
+        final falloff = math.pow((1 - r).clamp(0.0, 1.0), 2.4).toDouble();
+        final edge = math.min(
+          math.min(x - screen.left, screen.right - x),
+          math.min(y - screen.top, screen.bottom - y),
+        );
+        final soft = (edge / fade).clamp(0.0, 1.0);
+        final clump = 0.55 + 0.45 * math.sin(x * 0.031 + y * 0.017) * math.sin(y * 0.027 - x * 0.013 + 1.3);
+        if (rng.nextDouble() < 0.42 * falloff * soft * soft * clump) add(x, y);
+      }
+    }
     final target = Float32List(tx.length * 2);
     final start = Float32List(tx.length * 2);
     for (var i = 0; i < tx.length; i++) {
@@ -157,7 +195,7 @@ class _Cloud {
       start[i * 2] = sx[i];
       start[i * 2 + 1] = sy[i];
     }
-    return _Cloud(size, reach, target, start, Float32List.fromList(dl), Uint8List.fromList(bk));
+    return _Cloud(size, reach, screen, target, start, Float32List.fromList(dl), Uint8List.fromList(bk));
   }
 }
 
@@ -169,7 +207,7 @@ double _sdRoundRect(double px, double py, double cx, double cy, double hw, doubl
 }
 
 /// Probability of a dot at (u, v) in a 1 x 1.1 box.
-double _lockDensity(double u, double v, bool dust) {
+double _lockDensity(double u, double v) {
   final body = _sdRoundRect(u, v, 0.5, 0.76, 0.31, 0.23, 0.05);
   final double arc;
   if (v <= 0.48) {
@@ -190,10 +228,7 @@ double _lockDensity(double u, double v, bool dust) {
     final keyhole = 0.4 * math.exp(-hole.abs() / 0.012);
     return ((0.08 + 0.55 * shade + rim + keyhole) * (0.7 + 0.45 * grain)).clamp(0.0, 0.9);
   }
-  final halo = 0.5 * math.exp(-d / 0.009);
-  if (!dust) return halo;
-  final drift = (0.35 + 0.65 * ((u - 0.45) * 2).clamp(0.0, 1.0)) * (0.6 + 0.6 * grain);
-  return halo + 0.07 * math.exp(-d / 0.11) * drift;
+  return 0.5 * math.exp(-d / 0.009);
 }
 
 class _CloudPainter extends CustomPainter {

@@ -54,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
+      body: ListView(padding: listInsets(context), children: [
         const SectionLabel('Account'),
         PanelGroup(dividerIndent: 72, children: [
         ListTile(leading: const Icon(Icons.person_outline), title: Text(service.email), subtitle: Text(service.record?.serverUrl ?? '')),

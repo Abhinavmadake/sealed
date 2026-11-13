@@ -117,7 +117,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             IconButton(tooltip: 'Delete', icon: const Icon(Icons.delete_outline), onPressed: () => _delete(service, item)),
         ],
       ),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
+      body: ListView(padding: listInsets(context), children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(6, 8, 6, 20),
           child: Row(children: [

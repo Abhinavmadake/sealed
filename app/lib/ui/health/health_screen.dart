@@ -66,7 +66,7 @@ class _HealthScreenState extends State<HealthScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Vault health')),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 0, 16, 32), children: [
+      body: ListView(padding: listInsets(context), children: [
         Panel(
           padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
           child: Column(children: [

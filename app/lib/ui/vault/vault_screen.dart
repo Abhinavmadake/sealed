@@ -46,27 +46,10 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 
   void _new() async {
-    final type = await showModalBottomSheet<ItemType>(
+    final type = await showDialog<ItemType>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.password),
-              title: const Text('Login'),
-              subtitle: const Text('Username, password and website'),
-              onTap: () => Navigator.pop(context, ItemType.login),
-            ),
-            ListTile(
-              leading: const Icon(Icons.sticky_note_2_outlined),
-              title: const Text('Secure note'),
-              subtitle: const Text('Any text you want to keep private'),
-              onTap: () => Navigator.pop(context, ItemType.note),
-            ),
-          ],
-        ),
-      ),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (context) => const _NewItemDialog(),
     );
     if (type != null && mounted) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => ItemEditScreen(newType: type)));
@@ -304,7 +287,7 @@ class _VaultScreenState extends State<VaultScreen> {
                         ],
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
+                        padding: listInsets(context, top: 4, bottom: 110),
                         itemCount: visible.length,
                         itemBuilder: (context, i) => GroupCell(
                           first: i == 0,
@@ -352,6 +335,52 @@ class _EntryTile extends StatelessWidget {
         ],
       ),
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ItemDetailScreen(id: item.id))),
+    );
+  }
+}
+
+class _NewItemDialog extends StatelessWidget {
+  const _NewItemDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    Widget option(IconData icon, String title, String subtitle, ItemType type) => ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+          leading: Icon(icon, size: 26),
+          title: Text(title, style: text.titleMedium),
+          subtitle: Text(subtitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.pop(context, type),
+        );
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Glass(
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28))),
+          blur: 28,
+          tint: 0.09,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 6),
+                child: Text.rich(TextSpan(children: [
+                  TextSpan(text: 'New', style: text.headlineSmall),
+                  TextSpan(text: '  item', style: serifAccent(context, size: 18)),
+                ])),
+              ),
+              option(Icons.password, 'Login', 'Username, password and website', ItemType.login),
+              const Divider(height: 1, indent: 22, endIndent: 22),
+              option(Icons.sticky_note_2_outlined, 'Secure note', 'Any text you want to keep private', ItemType.note),
+              const SizedBox(height: 10),
+            ]),
+          ),
+        ),
+      ),
     );
   }
 }

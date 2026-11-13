@@ -54,7 +54,7 @@ class _DevicesScreenState extends State<DevicesScreen> {
         appBar: AppBar(title: const Text('Signed-in devices')),
         body: RefreshIndicator(
           onRefresh: _load,
-          child: ListView(padding: const EdgeInsets.fromLTRB(16, 8, 16, 32), children: [
+          child: ListView(padding: listInsets(context, top: 8), children: [
             if (_error != null) Padding(padding: const EdgeInsets.all(16), child: ErrorText(_error)),
             if (_sessions == null && _error == null) const LinearProgressIndicator(),
             if (_sessions != null && _sessions!.isNotEmpty)

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 const _radius = 22.0;
@@ -80,4 +82,10 @@ class SectionLabel extends StatelessWidget {
       child: Text(text.toUpperCase(), style: t.textTheme.labelSmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
     );
   }
+}
+
+/// Side margins for scrolling content: at least 20, and a centred column of at most 760 on wide screens.
+EdgeInsets listInsets(BuildContext context, {double top = 0, double bottom = 32}) {
+  final side = math.max(20.0, (MediaQuery.sizeOf(context).width - 760) / 2);
+  return EdgeInsets.fromLTRB(side, top, side, bottom);
 }

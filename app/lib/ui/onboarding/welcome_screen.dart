@@ -56,88 +56,102 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     }
   }
 
+  void _register() => Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(server: _server)));
+
+  void _login() => Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(server: _server)));
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final host = Uri.tryParse(_server)?.authority ?? _server;
-    final display = text.headlineMedium?.copyWith(
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final focus = wide ? const Alignment(0.42, 0.05) : const Alignment(0, -0.3);
+
+    final display = (wide ? text.displaySmall : text.headlineMedium)?.copyWith(
       fontWeight: FontWeight.w700,
       letterSpacing: 0.6,
       height: 1.12,
       color: scheme.onSurface,
     );
+    final headline = Text.rich(
+      TextSpan(children: [
+        const TextSpan(text: 'A PASSWORD MANAGER THAT '),
+        TextSpan(
+          text: 'cannot read',
+          style: serifAccent(context, size: (display?.fontSize ?? 28) + 2)
+              .copyWith(decoration: TextDecoration.underline, decorationThickness: 0.8),
+        ),
+        const TextSpan(text: ' YOUR PASSWORDS.'),
+      ]),
+      style: display,
+    );
+    final lede = Text(
+      'Everything is encrypted on this device before it is synced. The server only ever stores ciphertext.',
+      style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant, height: 1.5),
+    );
+    final crypto = Text('ARGON2ID  ·  XCHACHA20-POLY1305  ·  X25519', style: eyebrow(context));
+    const lock = StippleLock();
+
+    final topBar = Row(children: [
+      Text('-SEALED', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 2.4)),
+      const Spacer(),
+      if (wide) ...[
+        _ServerPill(host: host, reachable: _reachable, onTap: _editServer),
+        const SizedBox(width: 14),
+      ],
+      GlassButton(height: 40, onPressed: _login, child: const Text('Sign in')),
+      const SizedBox(width: 8),
+      FilledButton(
+        style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 18)),
+        onPressed: _register,
+        child: const Text('Create account'),
+      ),
+    ]);
+
+    final body = wide
+        ? Row(children: [
+            Expanded(
+              flex: 5,
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560), child: headline),
+                const SizedBox(height: 20),
+                ConstrainedBox(constraints: const BoxConstraints(maxWidth: 440), child: lede),
+                const SizedBox(height: 32),
+                crypto,
+              ]),
+            ),
+            const Expanded(flex: 6, child: Padding(padding: EdgeInsets.symmetric(vertical: 48, horizontal: 24), child: lock)),
+          ])
+        : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Expanded(child: Padding(padding: EdgeInsets.symmetric(vertical: 16), child: lock)),
+            headline,
+            const SizedBox(height: 14),
+            lede,
+            const SizedBox(height: 28),
+            Center(child: _ServerPill(host: host, reachable: _reachable, onTap: _editServer)),
+            const SizedBox(height: 16),
+            Center(child: crypto),
+          ]);
+
     return Backdrop(
-      behind: const [
-        Positioned.fill(child: TopoBackground(seed: 2, focus: Alignment(0.1, -0.3), peak: 1.5, levels: 26)),
-        Positioned.fill(child: _Vignette(center: Alignment(0, -0.3))),
-        Positioned(left: 0, right: 0, bottom: 0, height: 420, child: _BottomScrim()),
+      behind: [
+        Positioned.fill(child: TopoBackground(seed: 2, focus: focus, peak: 1.5, levels: 26)),
+        Positioned.fill(child: _Vignette(center: focus)),
+        if (!wide) const Positioned(left: 0, right: 0, bottom: 0, height: 420, child: _BottomScrim()),
       ],
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
+              constraints: BoxConstraints(maxWidth: wide ? 1200 : 460),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '-SEALED',
-                          style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 2.4),
-                        ),
-                        const Spacer(),
-                        _ServerPill(host: host, reachable: _reachable, onTap: _editServer),
-                      ],
-                    ),
-                    const Expanded(
-                      child: Padding(padding: EdgeInsets.symmetric(vertical: 10), child: StippleLock()),
-                    ),
-                    Text.rich(
-                      TextSpan(
-                        children: [
-                          const TextSpan(text: 'A PASSWORD MANAGER THAT '),
-                          TextSpan(
-                            text: 'cannot read',
-                            style: serifAccent(
-                              context,
-                              size: (display?.fontSize ?? 28) + 2,
-                            ).copyWith(decoration: TextDecoration.underline, decorationThickness: 0.8),
-                          ),
-                          const TextSpan(text: ' YOUR PASSWORDS.'),
-                        ],
-                      ),
-                      style: display,
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Everything is encrypted on this device before it is synced. The server only ever stores ciphertext.',
-                      style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant, height: 1.45),
-                    ),
-                    const SizedBox(height: 28),
-                    FilledButton(
-                      onPressed: () =>
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterScreen(server: _server))),
-                      child: const Text('Create account'),
-                    ),
-                    const SizedBox(height: 10),
-                    GlassButton(
-                      onPressed: () =>
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen(server: _server))),
-                      child: const Text('Sign in'),
-                    ),
-                    const SizedBox(height: 22),
-                    Text(
-                      'ARGON2ID  ·  XCHACHA20-POLY1305  ·  X25519',
-                      textAlign: TextAlign.center,
-                      style: eyebrow(context),
-                    ),
-                  ],
-                ),
+                padding: wide ? const EdgeInsets.fromLTRB(40, 20, 40, 32) : const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  topBar,
+                  Expanded(child: body),
+                ]),
               ),
             ),
           ),
