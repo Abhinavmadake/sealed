@@ -95,7 +95,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ],
                     ),
                     const Expanded(
-                      child: Padding(padding: EdgeInsets.symmetric(vertical: 24, horizontal: 36), child: StippleLock()),
+                      child: Padding(padding: EdgeInsets.symmetric(vertical: 10), child: StippleLock()),
                     ),
                     Text.rich(
                       TextSpan(

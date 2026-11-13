@@ -87,19 +87,22 @@ class _UnlockScreenState extends State<UnlockScreen> {
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
-              child: ListView(
-                shrinkWrap: true,
+              child: SingleChildScrollView(
+                clipBehavior: Clip.none,
                 padding: const EdgeInsets.all(24),
+                child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    height: 220,
+                    height: 300,
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
                         radius: 0.6,
                         colors: [scheme.surface.withValues(alpha: 0.95), scheme.surface.withValues(alpha: 0)],
                       ),
                     ),
-                    child: const Padding(padding: EdgeInsets.all(14), child: StippleLock(seed: 5, dust: false)),
+                    child: const Padding(padding: EdgeInsets.all(4), child: StippleLock(seed: 5, dust: false)),
                   ),
                   const SizedBox(height: 28),
                   Text('LOCKED', textAlign: TextAlign.center, style: eyebrow(context)),
@@ -129,6 +132,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                     child: Text('Not you? Sign out', style: TextStyle(color: scheme.onSurfaceVariant)),
                   ),
                 ],
+                ),
               ),
             ),
           ),

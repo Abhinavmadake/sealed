@@ -60,7 +60,8 @@ class _GrainPainter extends CustomPainter {
   bool shouldRepaint(_GrainPainter old) => old.color != color || old.density != density;
 }
 
-/// A padlock drawn as a stippled point cloud that drifts in from the right and settles.
+/// A padlock drawn as a stippled point cloud. The dots start on a huge scattered ring, much of it
+/// off-screen, fade in and spiral inward until they form the lock.
 class StippleLock extends StatefulWidget {
   const StippleLock({super.key, this.seed = 11, this.dust = true});
 
@@ -72,7 +73,7 @@ class StippleLock extends StatefulWidget {
 }
 
 class _StippleLockState extends State<StippleLock> with SingleTickerProviderStateMixin {
-  late final _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1700));
+  late final _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2600));
   _Cloud? _cloud;
 
   @override
@@ -94,39 +95,44 @@ class _StippleLockState extends State<StippleLock> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final ink = Theme.of(context).colorScheme.onSurface;
-    return LayoutBuilder(
-      builder: (context, box) {
-        final size = Size(box.maxWidth, box.maxHeight);
-        if (_cloud?.size != size) _cloud = _Cloud.lock(size, widget.seed, widget.dust);
-        return RepaintBoundary(
-          child: CustomPaint(size: size, painter: _CloudPainter(_cloud!, _controller, ink)),
-        );
-      },
-    );
+    final screen = MediaQuery.sizeOf(context);
+    final reach = math.sqrt(screen.width * screen.width + screen.height * screen.height) / 2;
+    return LayoutBuilder(builder: (context, box) {
+      final size = Size(box.maxWidth, box.maxHeight);
+      if (_cloud?.size != size || _cloud?.reach != reach) {
+        _cloud = _Cloud.lock(size, reach, widget.seed, widget.dust);
+      }
+      return RepaintBoundary(
+        child: CustomPaint(size: size, painter: _CloudPainter(_cloud!, _controller, ink)),
+      );
+    });
   }
 }
 
 class _Cloud {
-  _Cloud(this.size, this.target, this.offset, this.delay, this.bucket);
+  _Cloud(this.size, this.reach, this.target, this.start, this.delay, this.bucket);
 
   final Size size;
+  final double reach;
   final Float32List target;
-  final Float32List offset;
+  final Float32List start;
   final Float32List delay;
   final Uint8List bucket;
 
   static const sizes = [0.75, 1.3, 2.3];
   static const alphas = [0.9, 0.6, 0.25];
+  static const swirl = 1.1;
 
   int get length => delay.length;
 
-  factory _Cloud.lock(Size size, int seed, bool dust) {
+  factory _Cloud.lock(Size size, double reach, int seed, bool dust) {
     final rng = math.Random(seed);
     final side = math.min(size.width, size.height / 1.1);
     final ox = (size.width - side) / 2;
     final oy = (size.height - side * 1.1) / 2;
-    final candidates = (size.width * size.height * 1.7).round();
-    final tx = <double>[], ty = <double>[], ex = <double>[], ey = <double>[], dl = <double>[];
+    final cx = size.width / 2, cy = size.height / 2;
+    final candidates = math.min((size.width * size.height * 1.7).round(), 420000);
+    final tx = <double>[], ty = <double>[], sx = <double>[], sy = <double>[], dl = <double>[];
     final bk = <int>[];
     for (var i = 0; i < candidates; i++) {
       final x = rng.nextDouble() * size.width;
@@ -135,21 +141,23 @@ class _Cloud {
       if (rng.nextDouble() >= d) continue;
       tx.add(x);
       ty.add(y);
-      ex.add((0.15 + rng.nextDouble() * 0.85) * size.width * 0.7);
-      ey.add((rng.nextDouble() - 0.6) * size.height * 0.35);
-      dl.add(rng.nextDouble() * 0.4);
+      final angle = rng.nextDouble() * math.pi * 2;
+      final radius = reach * (0.55 + 0.75 * math.sqrt(rng.nextDouble()));
+      sx.add(cx + math.cos(angle) * radius - x);
+      sy.add(cy + math.sin(angle) * radius - y);
+      dl.add(rng.nextDouble() * 0.38);
       final r = rng.nextDouble();
       bk.add(r < 0.72 ? 0 : (r < 0.95 ? 1 : 2));
     }
     final target = Float32List(tx.length * 2);
-    final offset = Float32List(tx.length * 2);
+    final start = Float32List(tx.length * 2);
     for (var i = 0; i < tx.length; i++) {
       target[i * 2] = tx[i];
       target[i * 2 + 1] = ty[i];
-      offset[i * 2] = ex[i];
-      offset[i * 2 + 1] = ey[i];
+      start[i * 2] = sx[i];
+      start[i * 2 + 1] = sy[i];
     }
-    return _Cloud(size, target, offset, Float32List.fromList(dl), Uint8List.fromList(bk));
+    return _Cloud(size, reach, target, start, Float32List.fromList(dl), Uint8List.fromList(bk));
   }
 }
 
@@ -195,37 +203,43 @@ class _CloudPainter extends CustomPainter {
   final Animation<double> progress;
   final Color ink;
 
+  static const _fadeSteps = 4;
+
   @override
   void paint(Canvas canvas, Size size) {
     final t = progress.value;
-    final counts = List.filled(3, 0);
+    final groups = List.generate(3 * _fadeSteps, (_) => <double>[]);
     for (var i = 0; i < cloud.length; i++) {
-      counts[cloud.bucket[i]]++;
+      final local = ((t - cloud.delay[i]) / 0.62).clamp(0.0, 1.0);
+      if (local <= 0) continue;
+      final ease = Curves.easeInOutCubic.transform(local);
+      final away = 1 - ease;
+      final turn = _Cloud.swirl * away;
+      final c = math.cos(turn), s = math.sin(turn);
+      final dx = cloud.start[i * 2] * away, dy = cloud.start[i * 2 + 1] * away;
+      final fade = math.min(1.0, local * 2.2);
+      final step = math.min(_fadeSteps - 1, (fade * _fadeSteps).floor());
+      groups[cloud.bucket[i] * _fadeSteps + step]
+        ..add(cloud.target[i * 2] + dx * c - dy * s)
+        ..add(cloud.target[i * 2 + 1] + dx * s + dy * c);
     }
-    final points = [for (final c in counts) Float32List(c * 2)];
-    final fill = List.filled(3, 0);
-    for (var i = 0; i < cloud.length; i++) {
-      final local = ((t - cloud.delay[i]) / 0.6).clamp(0.0, 1.0);
-      final away = math.pow(1 - local, 3).toDouble();
-      final b = cloud.bucket[i];
-      final j = fill[b];
-      points[b][j] = cloud.target[i * 2] + cloud.offset[i * 2] * away;
-      points[b][j + 1] = cloud.target[i * 2 + 1] + cloud.offset[i * 2 + 1] * away;
-      fill[b] = j + 2;
-    }
-    final fade = Curves.easeOut.transform(t.clamp(0.0, 1.0));
+    final paint = Paint()..strokeCap = StrokeCap.round;
     for (var b = 0; b < 3; b++) {
-      final paint = Paint()
-        ..color = ink.withValues(alpha: _Cloud.alphas[b] * (0.35 + 0.65 * fade))
-        ..strokeWidth = _Cloud.sizes[b]
-        ..strokeCap = StrokeCap.round;
-      canvas.drawRawPoints(ui.PointMode.points, points[b], paint);
+      for (var f = 0; f < _fadeSteps; f++) {
+        final pts = groups[b * _fadeSteps + f];
+        if (pts.isEmpty) continue;
+        paint
+          ..color = ink.withValues(alpha: _Cloud.alphas[b] * (f + 1) / _fadeSteps)
+          ..strokeWidth = _Cloud.sizes[b];
+        canvas.drawRawPoints(ui.PointMode.points, Float32List.fromList(pts), paint);
+      }
     }
   }
 
   @override
   bool shouldRepaint(_CloudPainter old) => old.cloud != cloud || old.ink != ink;
 }
+
 
 /// A round speckled monogram used for vault items.
 class SpeckleDisc extends StatelessWidget {

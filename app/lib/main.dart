@@ -13,6 +13,7 @@ import 'ui/onboarding/welcome_screen.dart';
 import 'ui/theme.dart';
 import 'ui/vault/vault_screen.dart';
 import 'ui/widgets/stipple.dart';
+import 'ui/widgets/ui_scale.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,7 +77,10 @@ class _SealedAppState extends State<SealedApp> {
                 theme: buildTheme(Brightness.dark),
                 themeMode: ThemeMode.dark,
                 home: const _Root(),
-                builder: (context, child) => Stack(children: [child!, const Positioned.fill(child: GrainOverlay())]),
+                builder: (context, child) => Stack(children: [
+                  UiScale(scale: context.select<VaultService, bool>((s) => s.unlocked) ? 1.12 : 1, child: child!),
+                  const Positioned.fill(child: GrainOverlay()),
+                ]),
               ),
             ),
           );

@@ -287,7 +287,7 @@ class _VaultScreenState extends State<VaultScreen> {
                     ? ListView(
                         children: [
                           const SizedBox(height: 120),
-                          const SizedBox(height: 160, child: StippleLock(seed: 3, dust: false)),
+                          const SizedBox(height: 220, child: StippleLock(seed: 3, dust: false)),
                           const SizedBox(height: 20),
                           Text(
                             service.entries.isEmpty
