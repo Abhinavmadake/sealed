@@ -1,0 +1,27 @@
+$ psql sealed -c "select email, left(auth_hash, 30) as auth_hash, kdf_ops, kdf_mem/1048576 as mem_mib, length(wrapped_account_key) as wrapped_key from users where email like '%@sealed.test'"
+        email        |           auth_hash            | kdf_ops | mem_mib | wrapped_key 
+---------------------+--------------------------------+---------+---------+-------------
+ abhinav@sealed.test | $argon2id$v=19$m=19456,t=2,p=1 |       3 |     256 |          73
+ bob@sealed.test     | $argon2id$v=19$m=19456,t=2,p=1 |       3 |     256 |          73
+ demo@sealed.test    | $argon2id$v=19$m=19456,t=2,p=1 |       3 |     256 |          73
+ student@sealed.test | $argon2id$v=19$m=19456,t=2,p=1 |       3 |     256 |          73
+(4 rows)
+
+$ psql sealed -c "select left(id::text, 8) as id, revision, length(blob) as bytes, left(encode(blob, 'base64'), 32) as blob from items where deleted_at is null"
+    id    | revision | bytes |               blob               
+----------+----------+-------+----------------------------------
+ 7771cb2b |       62 |   297 | AVF56Kl8e6AsuyUMGlkxxr8I6/8nQvWU
+ 977ccc20 |       89 |   297 | AcvlUHY5f/L2ojesqeaZIqIrP5XDEGEa
+ 8bce1246 |       92 |   297 | Aew3ijvudGLERIYxH6e2q+fpgh754dla
+ 8d6c4387 |      100 |   297 | AVnUd4iLNqVXdkGkxvCT5HwnZiEj07+2
+(4 rows)
+
+$ psql sealed -c "select u.email, g.key_kind, g.permission, g.revoked_at is not null as revoked from grants g join users u on u.id = g.user_id where g.item_id = (github item)"
+        email        | key_kind | permission | revoked 
+---------------------+----------+------------+---------
+ abhinav@sealed.test | self     | owner      | f
+ bob@sealed.test     | box      | write      | f
+(2 rows)
+
+$ psql sealed -Atc "select count(*) from items where encode(blob, 'escape') ilike '%netflix%'"
+0

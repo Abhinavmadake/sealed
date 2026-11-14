@@ -7,4 +7,4 @@
 - [x] 5. Verify the web build in Chrome (headless render was blank)
 - [x] 6. Biometric unlock on Android
 - [x] 7. Phase 7: end-to-end demo script (two devices, offline edits, database inspection)
-- [ ] 8. Phase 8: project documentation
+- [x] 8. Phase 8: project documentation

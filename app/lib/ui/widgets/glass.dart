@@ -136,6 +136,7 @@ class GlassButton extends StatelessWidget {
       color: onPressed == null ? scheme.onSurface.withValues(alpha: 0.38) : scheme.onSurface,
     );
     return Semantics(
+      container: true,
       button: true,
       enabled: onPressed != null,
       child: Glass(

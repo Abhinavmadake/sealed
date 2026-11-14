@@ -1,0 +1,44 @@
+loading /Users/abhinavmadake/sealed/app/integration_test/sync_test.dart
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: (setUpAll)
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: an item created on one device appears on another
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: the server only ever sees ciphertext
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: offline edits to different fields merge automatically
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: editing the same field on two devices asks the user
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: editing an item deleted elsewhere keeps the edits as a new item
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: a stale delete does not remove newer changes
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: read-only sharing
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: write sharing lets the recipient edit
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: revoking rotates the key and keeps the others working
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: a changed public key is refused
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: changing the password signs out other devices and keeps the vault
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: the recovery key restores the vault on a new device
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: offline unlock and offline edits sync later
+/Users/abhinavmadake/sealed/app/integration_test/sync_test.dart: (tearDownAll)
+loading /Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: (setUpAll)
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: sealed blobs round trip
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: sealed blobs same message encrypts differently each time
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: sealed blobs wrong label, key, version or a flipped bit all fail
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: sealed blobs wrapped keys have the size the server expects
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: password derivation is deterministic for the same password and salt
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: password derivation changes with the salt or the password
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: password derivation refuses parameters below the floor
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account (setUpAll)
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account master password unlocks the account key and private key
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account wrong password fails
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account a swapped public key is detected
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account changing the password keeps the same account key
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account recovery key recovers the account key
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account a mistyped recovery key fails
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: account (tearDownAll)
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items (setUpAll)
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items round trip and length is padded
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items ciphertext moved to another item id fails
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items owner unwraps own item key
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items shared key opens only for the recipient and only from the real sender
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items fingerprints are stable, readable and distinct
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: items (tearDownAll)
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: base32 round trips random data
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: base32 rejects bad input
+/Users/abhinavmadake/sealed/app/integration_test/crypto_test.dart: (tearDownAll)
+All tests passed!
