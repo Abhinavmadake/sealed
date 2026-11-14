@@ -20,10 +20,11 @@ enum VaultStatus { loading, noAccount, locked, unlocked }
 
 const _configuredServer = String.fromEnvironment('SEALED_SERVER');
 
-/// The web build talks to the server it was loaded from, unless it runs on this machine.
+/// The app uses the demo server; the web build talks to the server it was loaded from,
+/// unless it runs on this machine. Override with --dart-define=SEALED_SERVER=...
 String get defaultServer {
   if (_configuredServer.isNotEmpty) return _configuredServer;
-  if (!kIsWeb) return 'http://10.0.2.2:8000';
+  if (!kIsWeb) return 'https://abhinavs-macbook-pro.taild80e95.ts.net';
   final host = Uri.base.host;
   return host == 'localhost' || host == '127.0.0.1' ? 'http://localhost:8000' : Uri.base.origin;
 }
