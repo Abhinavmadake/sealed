@@ -18,10 +18,15 @@ import 'sharing.dart';
 
 enum VaultStatus { loading, noAccount, locked, unlocked }
 
-const defaultServer = String.fromEnvironment(
-  'SEALED_SERVER',
-  defaultValue: kIsWeb ? 'http://localhost:8000' : 'http://10.0.2.2:8000',
-);
+const _configuredServer = String.fromEnvironment('SEALED_SERVER');
+
+/// The web build talks to the server it was loaded from, unless it runs on this machine.
+String get defaultServer {
+  if (_configuredServer.isNotEmpty) return _configuredServer;
+  if (!kIsWeb) return 'http://10.0.2.2:8000';
+  final host = Uri.base.host;
+  return host == 'localhost' || host == '127.0.0.1' ? 'http://localhost:8000' : Uri.base.origin;
+}
 
 String get deviceName {
   if (kIsWeb) return 'Web browser';
