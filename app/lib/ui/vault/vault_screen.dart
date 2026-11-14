@@ -267,10 +267,7 @@ class _VaultScreenState extends State<VaultScreen> {
           ? ListView(
               children: [
                 const SizedBox(height: 110),
-                if (service.entries.isEmpty)
-                  const SizedBox(height: 220, child: StippleLock(seed: 3, dust: false))
-                else
-                  Icon(Icons.lock_outline, size: 52, color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
+                Icon(Icons.lock_outline, size: 52, color: scheme.onSurfaceVariant.withValues(alpha: 0.7)),
                 const SizedBox(height: 20),
                 Text(
                   service.entries.isEmpty ? 'Your vault is empty.\nTap New to add a login.' : 'Nothing matches.',
