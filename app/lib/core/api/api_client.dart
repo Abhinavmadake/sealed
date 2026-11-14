@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../crypto/account_keys.dart';
@@ -49,6 +49,8 @@ class ApiClient {
     final uri = Uri.parse('$baseUrl/api/v1$path').replace(queryParameters: query);
     final request = http.Request(method, uri);
     request.headers['Accept'] = 'application/json';
+    // ngrok's free tunnels answer browsers with a warning page unless this is set.
+    if (kIsWeb) request.headers['ngrok-skip-browser-warning'] = '1';
     if (token != null) request.headers['Authorization'] = 'Bearer $token';
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
