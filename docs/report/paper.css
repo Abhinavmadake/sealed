@@ -1,0 +1,81 @@
+@page {
+  size: A4;
+  margin: 22mm 20mm 20mm 20mm;
+  @top-center { content: "Sealed: A Zero-Knowledge Password Manager"; font: italic 8.4pt 'Iowan Old Style', 'Times New Roman', serif; color: #555; }
+  @bottom-center { content: counter(page); font: 9pt 'Iowan Old Style', 'Times New Roman', serif; color: #333; }
+}
+@page :first { @top-center { content: none; } @bottom-center { content: none; } }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; font-family: 'Iowan Old Style', 'Palatino', 'Times New Roman', serif; font-size: 10.6pt; line-height: 1.47; color: #111; }
+
+.titlepage { height: 250mm; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; break-after: page; }
+.titlepage .kicker { font-size: 11pt; letter-spacing: .16em; text-transform: uppercase; color: #333; }
+.titlepage .kind { font-size: 13pt; font-style: italic; margin-top: 6px; }
+.titlepage hr { border: 0; border-top: 0.8px solid #111; width: 62%; margin: 26px 0; }
+.titlepage h1 { font-size: 40pt; font-weight: normal; letter-spacing: .02em; margin: 0; line-height: 1.1; }
+.titlepage .subtitle { font-size: 16pt; line-height: 1.35; margin-top: 10px; }
+.titlepage .by { font-size: 10pt; font-style: italic; color: #444; margin-bottom: 6px; }
+.titlepage .author { font-size: 15pt; }
+.titlepage .affil { font-size: 11pt; color: #333; margin-top: 4px; }
+.titlepage .stack { font-size: 10pt; letter-spacing: .08em; color: #444; margin-top: 30px; }
+.titlepage .date { font-size: 11pt; margin-top: 8px; }
+
+.index { break-after: page; }
+.index .ixh { font-size: 18pt; margin: 0 0 16px; }
+.ix { display: flex; align-items: baseline; gap: 6px; font-size: 10.8pt; line-height: 1.5; }
+.ix.l2 { font-weight: bold; margin-top: 7px; }
+.ix.l3 { padding-left: 2.1em; font-size: 10.2pt; }
+.ix .no { min-width: 2.1em; }
+.ix.l3 .no { min-width: 2.6em; }
+.ix .dots { flex: 1; border-bottom: 1px dotted #777; transform: translateY(-3px); }
+.ix .pg { min-width: 1.4em; text-align: right; }
+
+h2 { font-size: 14pt; font-weight: bold; font-variant: small-caps; letter-spacing: .04em; margin: 20px 0 8px; break-after: avoid; }
+h2 .n { margin-right: .7em; }
+h3 { font-size: 11.6pt; font-weight: bold; font-style: italic; margin: 14px 0 6px; break-after: avoid; }
+h3 .n { font-style: normal; margin-right: .6em; }
+.sec.pb { break-before: page; }
+.sec.pb h2 { margin-top: 0; }
+
+p { margin: 0 0 7px; text-align: justify; hyphens: auto; }
+p + p { text-indent: 1.3em; }
+ul, ol { margin: 4px 0 9px; padding-left: 1.5em; }
+li { margin: 0 0 4px; text-align: justify; hyphens: auto; }
+ol.obj { list-style: none; padding-left: 0; }
+ol.obj li { display: grid; grid-template-columns: 2.6em 1fr; }
+ol.obj li b.id { font-weight: bold; }
+code { font: 8.4pt Menlo, monospace; white-space: nowrap; }
+i.term { font-style: italic; }
+
+table { width: 100%; border-collapse: collapse; margin: 4px 0 4px; font-size: 9.1pt; line-height: 1.38; }
+table thead tr th { border-top: 1.2px solid #111; border-bottom: 0.7px solid #111; padding: 5px 7px 4px 0; text-align: left; font-weight: bold; }
+table tbody tr:last-child td { border-bottom: 1.2px solid #111; }
+td { padding: 4px 7px 4px 0; vertical-align: top; }
+td.k { white-space: nowrap; }
+td.num, th.num { text-align: right; }
+tr { break-inside: avoid; }
+.tbl { margin: 10px 0 14px; break-inside: avoid; }
+.tbl.split { break-inside: auto; }
+.keep { break-inside: avoid; }
+.tcap { font-size: 9pt; text-align: center; padding-bottom: 4px; caption-side: top; }
+.tcap b, figcaption b, .lcap b { font-weight: bold; }
+
+figure { margin: 10px 0 14px; break-inside: avoid; }
+figcaption { font-size: 9pt; margin-top: 6px; text-align: justify; line-height: 1.4; }
+.diagram { text-align: center; }
+.diagram svg { width: 100%; height: auto; }
+.shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 6px; }
+.shots img { width: 100%; display: block; border: 0.6px solid #bbb; border-radius: 6px; }
+.shots .sub { font-size: 8.4pt; text-align: center; margin-top: 4px; }
+.web img { width: 100%; display: block; border: 0.6px solid #bbb; }
+
+.listing { margin: 9px 0 13px; break-inside: avoid; }
+.lcap { font-size: 9pt; margin-bottom: 3px; }
+pre { margin: 0; font: 7.2pt/1.42 Menlo, monospace; background: #f5f5f5; border-top: 0.7px solid #999; border-bottom: 0.7px solid #999; padding: 7px 9px; white-space: pre-wrap; word-break: break-word; }
+pre .ln { color: #999; display: inline-block; width: 2.5em; user-select: none; }
+pre .k { font-weight: bold; } pre .c { color: #666; font-style: italic; } pre .s { color: #444; }
+pre.out { font-size: 6.7pt; line-height: 1.36; }
+
+.refs { font-size: 9.4pt; padding-left: 2.2em; }
+.refs li { margin-bottom: 4px; text-align: left; }
