@@ -94,6 +94,8 @@ void main() {
     expect(report.checked, 4);
     expect(report.weak.map((w) => w.$1.id), ['a']);
     expect(report.reused.single.map((i) => i.id), ['b', 'c']);
-    expect(report.score(0), 25);
+    expect(report.score(), 25);
+    expect(report.score(['a']), 25);
+    expect(report.score(['a', 'd']), 0);
   });
 }

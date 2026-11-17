@@ -48,7 +48,7 @@ class _HealthScreenState extends State<HealthScreen> {
     final items = service.entries.map((e) => e.item).toList();
     final report = analyseVault(items);
     final logins = items.where((i) => i.type == ItemType.login && i.password.isNotEmpty).toList();
-    final score = report.score(_breached?.length ?? 0);
+    final score = report.score(_breached?.keys ?? const []);
     final scheme = Theme.of(context).colorScheme;
     final color = score >= 80
         ? StrengthMeter.colorFor(Strength.strong)

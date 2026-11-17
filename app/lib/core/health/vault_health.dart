@@ -10,9 +10,9 @@ class HealthReport {
 
   int get reusedCount => reused.fold(0, (n, g) => n + g.length);
 
-  int score(int breached) {
+  int score([Iterable<String> breached = const []]) {
     if (checked == 0) return 100;
-    final bad = {...weak.map((w) => w.$1.id), ...reused.expand((g) => g.map((i) => i.id))}.length + breached;
+    final bad = {...weak.map((w) => w.$1.id), ...reused.expand((g) => g.map((i) => i.id)), ...breached}.length;
     return (100 * (1 - bad / checked)).clamp(0, 100).round();
   }
 }
