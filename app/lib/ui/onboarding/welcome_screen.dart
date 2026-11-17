@@ -5,7 +5,7 @@ import 'login_screen.dart';
 import '../theme.dart';
 import '../widgets/elastic.dart';
 import '../widgets/glass.dart';
-import '../widgets/stipple.dart';
+import '../widgets/graphite.dart';
 import '../widgets/topo.dart';
 import 'register_screen.dart';
 
@@ -53,7 +53,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant, height: 1.5),
     );
     final crypto = Text('ARGON2ID  ·  XCHACHA20-POLY1305  ·  X25519', style: eyebrow(context));
-    const lock = StippleLock();
+    const lock = GrainLock();
 
     final topBar = Row(children: [
       Text('-SEALED', style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 2.4)),
@@ -118,6 +118,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       behind: [
         Positioned.fill(child: TopoBackground(seed: 2, focus: focus, peak: 1.5, levels: 26)),
         Positioned.fill(child: _Vignette(center: focus)),
+        Positioned.fill(child: LightBeam(toward: focus)),
         if (!wide) const Positioned(left: 0, right: 0, bottom: 0, height: 420, child: _BottomScrim()),
       ],
       child: Scaffold(

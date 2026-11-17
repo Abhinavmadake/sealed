@@ -6,7 +6,7 @@ import '../../services/vault_service.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import '../widgets/glass.dart';
-import '../widgets/stipple.dart';
+import '../widgets/graphite.dart';
 import '../widgets/topo.dart';
 
 class UnlockScreen extends StatefulWidget {
@@ -80,6 +80,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
     return Backdrop(
       behind: const [
         Positioned.fill(child: TopoBackground(seed: 6, focus: Alignment(0, -0.45), peak: 1.6, levels: 24)),
+        Positioned.fill(child: LightBeam(toward: Alignment(0, -0.1))),
       ],
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -94,16 +95,7 @@ class _UnlockScreenState extends State<UnlockScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    height: 300,
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        radius: 0.6,
-                        colors: [scheme.surface.withValues(alpha: 0.95), scheme.surface.withValues(alpha: 0)],
-                      ),
-                    ),
-                    child: const Padding(padding: EdgeInsets.all(4), child: StippleLock(seed: 5, dust: false)),
-                  ),
+                  const SizedBox(height: 300, child: Padding(padding: EdgeInsets.all(4), child: GrainLock())),
                   const SizedBox(height: 28),
                   Text('LOCKED', textAlign: TextAlign.center, style: eyebrow(context)),
                   const SizedBox(height: 6),
