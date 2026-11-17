@@ -3,6 +3,9 @@
 A zero-knowledge password manager. The server only ever stores ciphertext: all encryption and
 decryption happens on the device, so a full database leak reveals no passwords.
 
+> **Note:** this is a mini project for my Cross Platform Application Development course, not a
+> product. It has not been audited, so please don't use it for real passwords.
+
 - `app/`: Flutter client (Android and web)
 - `server/`: FastAPI backend with PostgreSQL
 - `docs/PLAN.md`: scope, architecture, key hierarchy, API and known limits
@@ -47,11 +50,12 @@ Settings come from environment variables with the `SEALED_` prefix or a `server/
 ```sh
 cd app
 flutter pub get
-flutter run                 # Android emulator, talks to http://10.0.2.2:8000
+flutter run --dart-define=SEALED_SERVER=http://10.0.2.2:8000   # Android emulator
 flutter run -d chrome       # web, talks to http://localhost:8000
 ```
 
-To use a different server, pass `--dart-define=SEALED_SERVER=http://host:8000`.
+Without `SEALED_SERVER`, the Android app uses the course demo server. The web build talks to the
+server it was loaded from, or to `http://localhost:8000` when opened from localhost.
 
 The web build needs the libsodium script once:
 
